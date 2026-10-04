@@ -57,6 +57,8 @@ for (const name of readdirSync(chapterDir).filter((f) => f.endsWith('.mdx'))) {
       if (inMath || /^\s*(import |<|\$\$)/.test(raw)) return;
       const prose = raw.replace(/`[^`]*`/g, '').replace(/\$[^$]*\$/g, '').replace(/\\[{}]/g, '');
       if (/[{}]/.test(prose)) fail(`${where}:${i + 1}`, 'unescaped { or } in prose (write \\{ \\} or put it in `code`)');
+      // MDX reads < followed by anything but a space as a JSX tag: `i < j` is fine, but << or <= must be in `code`.
+      if (/<(?![A-Za-z/\s])/.test(prose)) fail(`${where}:${i + 1}`, 'bare << or <= in prose: put the expression in `code`');
     });
   }
 

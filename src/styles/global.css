@@ -720,3 +720,22 @@ html:not([data-auth='in']) [data-when-signed-in] { display: none !important; }
 .tile { stroke-width: 2; }
 .tile.h { fill: var(--range-bg); stroke: var(--range-bd); }
 .tile.v { fill: var(--plus-bg); stroke: var(--plus-bd); }
+
+/* Select fields in visualiser controls */
+.field select { height: 34px; border: 1px solid var(--border-strong); border-radius: 8px; padding: 0 0.5rem; background: var(--surface); color: var(--text); font: 500 0.88rem var(--font-mono); }
+
+/* Bit rows (chapter 10): BitTable */
+.bits { display: inline-grid; align-items: center; column-gap: 2px; row-gap: 5px; }
+.bits .b-idx { font: 500 0.6rem/1 var(--font-mono); color: var(--muted); text-align: center; }
+.bits .b-lab { font: 600 0.8rem var(--font-mono); color: var(--text-2); padding-right: 0.7rem; white-space: nowrap; text-align: right; }
+.bits .b-val { font: 550 0.86rem var(--font-body); color: var(--text-2); padding-left: 0.8rem; white-space: nowrap; }
+.bits .b-sep { grid-column: 1 / -1; border-top: 1.5px solid var(--border-strong); margin: 1px 0; }
+.bit { width: 20px; height: 28px; display: grid; place-items: center; border: 1.5px solid var(--border); border-radius: 5px; background: var(--surface); font: 650 0.8rem var(--font-mono); color: var(--muted); padding: 0; transition: background 0.15s, border-color 0.15s; }
+.bit.one { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-2); }
+.bit[class*='role-'] { background: var(--r-bg); border-color: var(--r-bd); color: var(--r-fg); }
+.bits .nib { margin-left: 5px; }
+button.bit { cursor: pointer; }
+button.bit:hover { outline: 2px solid var(--accent); outline-offset: 1px; }
+.lab-facts { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; margin: 0.8rem 0 0.2rem; font: 500 0.8rem var(--font-mono); color: var(--text-2); }
+.lab-facts b { color: var(--text); }
+.viz-note { margin: 0.9rem 0 0; font-size: 0.92rem; line-height: 1.55; color: var(--text-2); }

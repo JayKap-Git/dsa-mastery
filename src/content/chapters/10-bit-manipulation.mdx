@@ -1,0 +1,391 @@
+---
+num: 10
+minutes: 85
+prerequisites: [1, 7]
+learn:
+  - en: How a Java int really stores numbers — two's complement, overflow, and the unsigned view.
+    hi: Java int numbers ko asal mein kaise rakhta hai — two's complement, overflow, aur unsigned view.
+  - en: Every bit operation and the classic tricks — x & (x−1), x & −x, testing and setting bits, Integer.bitCount.
+    hi: Har bit operation aur classic tricks — x & (x−1), x & −x, bits check/set karna, Integer.bitCount.
+  - en: Sets as bitmasks, word-level speedups, and dynamic programming over subsets.
+    hi: Bitmask se sets, word-level speedups, aur subsets pe dynamic programming.
+---
+import BitPlayground from '../../viz/algos/ch10/BitPlayground';
+import SetOpsLab from '../../viz/algos/ch10/SetOpsLab';
+import SubmaskViz from '../../viz/algos/ch10/SubmaskViz';
+import HammingViz from '../../viz/algos/ch10/HammingViz';
+import SelectionViz from '../../viz/algos/ch10/SelectionViz';
+import ElevatorViz from '../../viz/algos/ch10/ElevatorViz';
+import SOSViz from '../../viz/algos/ch10/SOSViz';
+
+<En>
+
+Everything a program stores is bits. This chapter looks at integers **as bit strings**: how they're represented, what the bit operations do, and three big uses. A 32-bit int can be a whole **set** of up to 32 elements, a machine word can do **32 or 64 comparisons at once**, and a bitmask can be the **state of a DP** over subsets.
+
+</En>
+<Hi>
+
+Program jo bhi store karta hai, sab bits hain. Yeh chapter integers ko **bit strings** ki tarah dekhta hai: woh kaise represent hote hain, bit operations kya karte hain, aur teen bade istemaal. Ek 32-bit int poora **set** (32 elements tak) ban sakta hai, ek machine word **ek saath 32 ya 64 comparisons** kar sakta hai, aur bitmask subsets pe **DP ki state** ban sakta hai.
+
+</Hi>
+
+<Section id="10.1" title="Bit representation">
+
+<En>
+
+An n-bit integer is a binary number b(n−1) … b2 b1 b0, with bits indexed **from the right**, and its value is the sum of bᵢ · 2ⁱ. A Java `int` has 32 bits. For example, 43 = 2⁵ + 2³ + 2¹ + 2⁰ is `00000000000000000000000000101011`.
+
+Java's `int` and `long` are **signed** and use **two's complement**:
+
+- The top bit is the sign (0 = nonnegative, 1 = negative), and an n-bit value lies in −2ⁿ⁻¹ … 2ⁿ⁻¹ − 1.
+- **−x = ~x + 1**: invert every bit, then add one. So −43 is `11111111111111111111111111010101`.
+- The same bits read **unsigned** mean 2ⁿ − x: −43 is also 4294967253 (2³² − 43).
+- Going past the top wraps around: `Integer.MAX_VALUE + 1 == Integer.MIN_VALUE`. That's the silent overflow from chapter 1.
+
+</En>
+<Hi>
+
+n-bit integer ek binary number b(n−1) … b2 b1 b0 hai, bits **right se** index hote hain, aur value = saare bᵢ · 2ⁱ ka sum. Java `int` mein 32 bits hain. Jaise 43 = 2⁵ + 2³ + 2¹ + 2⁰, yaani `00000000000000000000000000101011`.
+
+Java ke `int` aur `long` **signed** hain aur **two's complement** use karte hain:
+
+- Sabse upar wala bit sign hai (0 = nonnegative, 1 = negative), aur n-bit value −2ⁿ⁻¹ … 2ⁿ⁻¹ − 1 ke beech hoti hai.
+- **−x = ~x + 1**: har bit ulta karo, phir ek jodo. Toh −43 = `11111111111111111111111111010101`.
+- Wahi bits **unsigned** padho toh 2ⁿ − x: −43 = 4294967253 (2³² − 43) bhi hai.
+- Upar se aage gaye toh ghoom ke neeche: `Integer.MAX_VALUE + 1 == Integer.MIN_VALUE`. Yahi chapter 1 wala silent overflow hai.
+
+</Hi>
+
+<JavaCode file="ch10/Bits.java" region="print" />
+
+<Callout type="java">
+
+<En>
+
+Java has no `unsigned int` type, but it has unsigned **views**: `Integer.toUnsignedString(x)`, `Integer.toUnsignedLong(x)`, `Integer.compareUnsigned` and `Integer.divideUnsigned`. `Integer.toBinaryString(x)` prints the bits without leading zeros, and `Integer.parseInt("101011", 2)` reads them back. You can also write literals as `0b101011` or `0x2B`.
+
+</En>
+<Hi>
+
+Java mein `unsigned int` type nahi hai, par unsigned **views** hain: `Integer.toUnsignedString(x)`, `Integer.toUnsignedLong(x)`, `Integer.compareUnsigned` aur `Integer.divideUnsigned`. `Integer.toBinaryString(x)` bits ko bina leading zeros ke print karta hai, aur `Integer.parseInt("101011", 2)` wapas padhta hai. Literals `0b101011` ya `0x2B` ki tarah bhi likh sakte ho.
+
+</Hi>
+
+</Callout>
+
+</Section>
+
+<Section id="10.2" title="Bit operations">
+
+<En>
+
+| operation | result has a 1 where… | example |
+|---|---|---|
+| `x & y` (and) | both have a 1 | `22 & 26 = 18` |
+| `x \| y` (or) | at least one has a 1 | `22 \| 26 = 30` |
+| `x ^ y` (xor) | exactly one has a 1 | `22 ^ 26 = 12` |
+| `~x` (not) | x has a 0 (all 32 bits flip), so ~x = −x − 1 | `~29 = −30` |
+| `x << k` | x's bits move left k places: × 2ᵏ | `14 << 2 = 56` |
+| `x >> k` | x's bits move right k places: ⌊x / 2ᵏ⌋ | `49 >> 3 = 6` |
+
+**Using single bits.** `1 << k` has only bit k set, so:
+
+- **test** bit k: `(x & (1 << k)) != 0`;
+- **set** it: `x | (1 << k)`; **clear** it: `x & ~(1 << k)`; **flip** it: `x ^ (1 << k)`.
+
+**Tricks with the last one bit:**
+
+- `x & (x − 1)` clears the last one bit. A positive x is a **power of two** exactly when this gives 0.
+- `x & −x` keeps only the last one bit. The Fenwick tree in chapter 9 uses this.
+- `x | (x − 1)` sets all the bits after the last one bit.
+- `x & 1` is 0 for even x, and `x & (2ᵏ − 1)` is x mod 2ᵏ.
+
+**Counting functions.** The book uses g++'s `__builtin_*` functions. In Java they are `Integer.numberOfLeadingZeros(x)`, `Integer.numberOfTrailingZeros(x)` and `Integer.bitCount(x)`, and the parity is `bitCount(x) & 1`. For 5328 they give 19, 4, 5 and 1. `Long` has the same methods.
+
+</En>
+<Hi>
+
+| operation | result mein 1 wahan jahan… | example |
+|---|---|---|
+| `x & y` (and) | dono mein 1 | `22 & 26 = 18` |
+| `x \| y` (or) | kam se kam ek mein 1 | `22 \| 26 = 30` |
+| `x ^ y` (xor) | theek ek mein 1 | `22 ^ 26 = 12` |
+| `~x` (not) | x mein 0 (saare 32 bits ulte), toh ~x = −x − 1 | `~29 = −30` |
+| `x << k` | x ke bits k jagah left: × 2ᵏ | `14 << 2 = 56` |
+| `x >> k` | x ke bits k jagah right: ⌊x / 2ᵏ⌋ | `49 >> 3 = 6` |
+
+**Ek-ek bit ke saath kaam.** `1 << k` mein sirf bit k set hai, toh:
+
+- bit k **check**: `(x & (1 << k)) != 0`;
+- **set**: `x | (1 << k)`; **clear**: `x & ~(1 << k)`; **flip**: `x ^ (1 << k)`.
+
+**Aakhri one bit wali tricks:**
+
+- `x & (x − 1)` aakhri one bit hata deta hai. Positive x **2 ki power** tabhi hai jab yeh 0 de.
+- `x & −x` sirf aakhri one bit rakhta hai. Chapter 9 ka Fenwick tree yahi use karta hai.
+- `x | (x − 1)` aakhri one bit ke baad ke saare bits 1 kar deta hai.
+- `x & 1` even x ke liye 0, aur `x & (2ᵏ − 1)` = x mod 2ᵏ.
+
+**Counting functions.** Book g++ ke `__builtin_*` functions use karti hai. Java mein yeh hain `Integer.numberOfLeadingZeros(x)`, `Integer.numberOfTrailingZeros(x)` aur `Integer.bitCount(x)`, aur parity `bitCount(x) & 1`. 5328 ke liye yeh 19, 4, 5 aur 1 dete hain. `Long` mein bhi yahi methods hain.
+
+</Hi>
+
+<JavaCode file="ch10/Bits.java" region="tricks" />
+<JavaCode file="ch10/Bits.java" region="builtins" />
+
+<BitPlayground client:visible />
+
+<Callout type="pitfall">
+
+<En>
+
+Three Java traps:
+
+1. **`>>` vs `>>>`.** `>>` copies the sign bit in, so −16 >> 2 = −4. `>>>` shifts zeros in, so −16 >>> 28 = 15.
+2. **Rounding.** `>>` rounds **down** (−7 >> 1 = −4), but `/` rounds toward zero (−7 / 2 = −3).
+3. **Mixing int and long.** In `long mask`, the term `1 << 40` is an `int` shift. Shift counts are taken mod 32, so it's really `1 << 8`. Write `1L << 40`.
+
+Also, `&`, `|` and `^` bind more loosely than `==`, so write `(x & 1) == 0`, never `x & 1 == 0` (which doesn't even compile in Java).
+
+</En>
+<Hi>
+
+Java ke teen jaal:
+
+1. **`>>` vs `>>>`.** `>>` sign bit copy karta hai, toh −16 >> 2 = −4. `>>>` zeros laata hai, toh −16 >>> 28 = 15.
+2. **Rounding.** `>>` **neeche** round karta hai (−7 >> 1 = −4), par `/` zero ki taraf (−7 / 2 = −3).
+3. **int aur long mix karna.** `long mask` mein `1 << 40` ek `int` shift hai. Shift count mod 32 hota hai, toh asal mein yeh `1 << 8` hai. `1L << 40` likho.
+
+Aur `&`, `|`, `^` ki priority `==` se kam hai, toh `(x & 1) == 0` likho, kabhi `x & 1 == 0` nahi (Java mein yeh compile hi nahi hota).
+
+</Hi>
+
+</Callout>
+
+</Section>
+
+<Section id="10.3" title="Representing sets">
+
+<En>
+
+A subset of \{0, 1, …, n−1\} is an n-bit number whose one bits are its elements, so an `int` holds any subset of \{0, …, 31\} and a `long` any subset of \{0, …, 63\}. For example \{1, 3, 4, 8\} is 2⁸ + 2⁴ + 2³ + 2¹ = **282**. Each element costs one bit, and set operations become single instructions:
+
+| set | bits |
+|---|---|
+| a ∩ b | `a & b` |
+| a ∪ b | `a \| b` |
+| a \ b | `a & ~b` |
+| complement of a | `~a` (keep the n bits you use: `~a & ((1 << n) − 1)`) |
+| size | `Integer.bitCount(a)` |
+
+</En>
+<Hi>
+
+\{0, 1, …, n−1\} ka subset ek n-bit number hai jiske one bits uske elements hain — toh `int` \{0, …, 31\} ka koi bhi subset rakh sakta hai, aur `long` \{0, …, 63\} ka. Jaise \{1, 3, 4, 8\} = 2⁸ + 2⁴ + 2³ + 2¹ = **282**. Har element ka ek bit, aur set operations ek-ek instruction ban jaate hain:
+
+| set | bits |
+|---|---|
+| a ∩ b | `a & b` |
+| a ∪ b | `a \| b` |
+| a \ b | `a & ~b` |
+| a ka complement | `~a` (jo n bits use ho rahe hain wahi rakho: `~a & ((1 << n) − 1)`) |
+| size | `Integer.bitCount(a)` |
+
+</Hi>
+
+<JavaCode file="ch10/BitSets.java" region="set" />
+<JavaCode file="ch10/BitSets.java" region="ops" />
+
+<SetOpsLab client:visible />
+
+### Iterating through subsets
+
+<En>
+
+- **All subsets** of \{0, …, n−1\}: `for (int b = 0; b < (1 << n); b++)`.
+- **Subsets of size k:** the same loop, keeping only `Integer.bitCount(b) == k`.
+- **Subsets of a given set x:** the loop `b = (b - x) & x` visits exactly the $2^{|x|}$ subsets of x, in increasing order, and returns to 0 at the end. Why? b − x equals b + ~x + 1, and outside x every bit of ~x is 1, so the +1 carries straight across them. It counts in binary using only x's positions.
+
+</En>
+<Hi>
+
+- \{0, …, n−1\} ke **saare subsets**: `for (int b = 0; b < (1 << n); b++)`.
+- **Size k ke subsets:** wahi loop, sirf `Integer.bitCount(b) == k` wale rakho.
+- **Diye gaye set x ke subsets:** loop `b = (b - x) & x` x ke theek $2^{|x|}$ subsets badhte order mein visit karta hai, aur end mein wapas 0 pe aata hai. Kyun? b − x = b + ~x + 1, aur x ke bahar ~x ke saare bits 1 hain, toh +1 ka carry unke seedha paar jaata hai — sirf x ki positions pe binary counting.
+
+</Hi>
+
+<JavaCode file="ch10/BitSets.java" region="subsets" />
+<JavaCode file="ch10/BitSets.java" region="submasks" />
+
+<SubmaskViz client:visible />
+
+<Callout type="insight">
+
+<En>
+
+Many people write the submask loop downwards instead: `for (int s = x; s > 0; s = (s - 1) & x)`, which skips the empty set. Looping over the submasks of **every** mask costs 3ⁿ in total, not 4ⁿ: each element is either outside the mask, in the mask but not the submask, or in both.
+
+</En>
+<Hi>
+
+Kai log submask loop neeche ki taraf likhte hain: `for (int s = x; s > 0; s = (s - 1) & x)` — yeh khaali set chhod deta hai. **Har** mask ke submasks pe loop total 3ⁿ ka hota hai, 4ⁿ nahi: har element ya toh mask ke bahar hai, ya mask mein par submask mein nahi, ya dono mein.
+
+</Hi>
+
+</Callout>
+
+</Section>
+
+<Section id="10.4" title="Bit optimizations">
+
+<En>
+
+Bit tricks often don't change the complexity, but they can make code **tens of times faster**, because one machine instruction processes 32 or 64 bits at once.
+
+**Hamming distance:** the number of positions where two equal-length strings differ. To find the minimum over all pairs of n strings of length k ≤ 32, store each string as an int. Then hamming(a, b) = `Integer.bitCount(a ^ b)`, since xor marks exactly the differing positions. For [00111, 01101, 11110] the answer is 2. The book measured 10,000 strings of length 30: **13.5 s → 0.5 s**.
+
+</En>
+<Hi>
+
+Bit tricks aksar complexity nahi badalti, par code **dasiyon guna fast** kar sakti hain — kyunki ek machine instruction ek saath 32 ya 64 bits process karta hai.
+
+**Hamming distance:** do barabar-length strings kitni positions pe alag hain. n strings (length k ≤ 32) ke saare pairs ka minimum chahiye toh har string ko int bana do. Tab hamming(a, b) = `Integer.bitCount(a ^ b)`, kyunki xor theek alag positions ko mark karta hai. [00111, 01101, 11110] ka answer 2. Book ne 10,000 strings (length 30) pe naapa: **13.5 s → 0.5 s**.
+
+</Hi>
+
+<JavaCode file="ch10/BitOptimizations.java" region="hamming" />
+
+<HammingViz client:visible />
+
+<En>
+
+**Counting subgrids:** in an n × n black-and-white grid, count the subgrids whose four corners are all black. For each pair of rows, count the columns c where both rows are black. Any 2 of those c columns form a subgrid, which gives c(c − 1)/2. Done cell by cell this is O(n³). Packing each row into 64-bit words lets one `Long.bitCount(a & b)` handle 64 columns at once, for **O(n³ / 64)**. The book's 2500 × 2500 test went from 29.6 s to 1.7 s.
+
+</En>
+<Hi>
+
+**Subgrids ginna:** n × n black-white grid mein woh subgrids gino jinke chaaron corners black hain. Har pair of rows ke liye gino kitne columns c mein dono rows black hain. Un c mein se koi bhi 2 columns ek subgrid banate hain: c(c − 1)/2. Cell-by-cell yeh O(n³) hai. Har row ko 64-bit words mein pack karo toh ek `Long.bitCount(a & b)` 64 columns ek saath sambhalta hai: **O(n³ / 64)**. Book ka 2500 × 2500 test 29.6 s se 1.7 s pe aa gaya.
+
+</Hi>
+
+<JavaCode file="ch10/BitOptimizations.java" region="subgrids" />
+
+<Callout type="java">
+
+<En>
+
+`java.util.BitSet` does this packing for you: `and`, `or`, `xor` and `cardinality()` work 64 bits at a time, and `nextSetBit(i)` jumps between ones. For tight inner loops, a plain `long[]` like above is a little faster and gives you full control.
+
+</En>
+<Hi>
+
+`java.util.BitSet` yeh packing tumhare liye karta hai: `and`, `or`, `xor` aur `cardinality()` ek baar mein 64 bits pe kaam karte hain, aur `nextSetBit(i)` ek one se agle one pe kood-ta hai. Tight inner loops ke liye upar jaisa simple `long[]` thoda fast hai aur poora control deta hai.
+
+</Hi>
+
+</Callout>
+
+</Section>
+
+<Section id="10.5" title="Dynamic programming">
+
+<En>
+
+When a DP state contains a **set**, store the set as a bitmask: it becomes an array index. The typical cost is O(2ⁿ · n), which works up to n ≈ 20.
+
+### Optimal selection
+
+**Problem:** you're given the prices of k products over n days. Buy each product exactly once, and at most one product per day. Minimise the total.
+
+total(S, d) is the cheapest way to buy the products in S by day d. On day d, either buy nothing (total(S, d−1)) or buy some x ∈ S, which costs total(S \ x, d−1) + price[x][d]. Day 0 is the base case: the empty set costs 0, a single product x costs price[x][0], and anything more is impossible. For the book's prices the answer is **5**. The running time is O(n · 2ᵏ · k).
+
+</En>
+<Hi>
+
+Jab DP ki state mein ek **set** ho, use bitmask ki tarah rakho — woh seedha array index ban jaata hai. Aam taur pe cost O(2ⁿ · n), jo n ≈ 20 tak chalti hai.
+
+### Optimal selection
+
+**Problem:** k products ke n dinon ke prices diye hain. Har product theek ek baar khareedo, aur ek din mein max ek product. Total minimum karo.
+
+total(S, d) = day d tak S ke products khareedne ka sabse sasta tareeka. Day d pe ya toh kuch mat khareedo (total(S, d−1)), ya koi x ∈ S khareedo, jiska kharcha total(S \ x, d−1) + price[x][d]. Day 0 base case hai: khaali set 0, akela product x price[x][0], aur usse zyada namumkin. Book ke prices ka answer **5**. Time O(n · 2ᵏ · k).
+
+</Hi>
+
+<JavaCode file="ch10/BitmaskDP.java" region="selection" />
+
+<SelectionViz client:visible />
+
+### From permutations to subsets
+
+<En>
+
+Many problems seem to need every **order** (n!), but only depend on **which** items are already used (2ⁿ). For n = 20, that's 2.4 · 10¹⁸ versus 10⁶. This idea goes back to Held and Karp (1962).
+
+**Elevator rides:** n people with weights ride an elevator with capacity x. If they enter in the best order, how many rides are needed? Note that the order of entering still matters: a new ride starts whenever the next person doesn't fit.
+
+For each set S keep best(S) = (**rides**, **weight of the last ride**), comparing rides first and then preferring a lighter last ride. To compute it, try each person p ∈ S as the **last** one to enter, starting from best(S \ p). If p fits into the last ride, they join it; otherwise p starts a new ride. With weights 2, 3, 3, 5, 6 and x = 10, the answer is **2** rides, for example \{0, 2, 3\} then \{1, 4\}. Looping s from 1 to 2ⁿ − 1 is a valid order, because a subset is always numerically smaller than the set containing it.
+
+</En>
+<Hi>
+
+Kai problems lagti hain ki har **order** (n!) chahiye, par asal mein sirf yeh matter karta hai ki **kaunse** items use ho chuke (2ⁿ). n = 20 pe 2.4 · 10¹⁸ vs 10⁶. Yeh idea Held aur Karp (1962) ka hai.
+
+**Elevator rides:** n log jinke weights diye hain, capacity x wali lift. Best order mein ghusein toh kitni rides chahiye? Dhyaan do, ghusne ka order abhi bhi matter karta hai: jab agla insaan fit nahi hota, nayi ride shuru hoti hai.
+
+Har set S ke liye best(S) = (**rides**, **aakhri ride ka weight**) rakho — pehle rides compare karo, phir halki aakhri ride behtar. Ise nikaalne ke liye har p ∈ S ko **aakhri** ghusne wala maan ke dekho, best(S \ p) se shuru karke. p aakhri ride mein fit ho toh usme jud jaata hai, warna p nayi ride shuru karta hai. Weights 2, 3, 3, 5, 6 aur x = 10 pe answer **2** rides, jaise \{0, 2, 3\} phir \{1, 4\}. s ko 1 se 2ⁿ − 1 tak chalana sahi order hai, kyunki subset hamesha apne bade set se numerically chhota hota hai.
+
+</Hi>
+
+<JavaCode file="ch10/BitmaskDP.java" region="elevator" />
+
+<ElevatorViz client:visible />
+
+### Counting subsets (sum over subsets)
+
+<En>
+
+**Problem:** every subset S of \{0, …, n−1\} has a value. For every S, compute sum(S), the total value of all subsets of S. Going through all pairs of sets is O(4ⁿ).
+
+Instead, let elements become removable **one at a time**. partial(S, k) only removes elements 0 … k, so:
+
+- if k ∉ S, partial(S, k) = partial(S, k−1);
+- if k ∈ S, partial(S, k) = partial(S, k−1) + partial(S \ k, k−1).
+
+This works **in place** on a single array, giving n · 2ⁿ additions. For the book's values, sum(\{0, 2\}) = 3 + 1 + 5 + 1 = **10**.
+
+</En>
+<Hi>
+
+**Problem:** \{0, …, n−1\} ke har subset S ki ek value hai. Har S ke liye sum(S) nikaalo — S ke saare subsets ki total value. Saare set-pairs dekhna O(4ⁿ) hai.
+
+Iski jagah elements ko **ek-ek karke** hatane layak banao. partial(S, k) sirf elements 0 … k hata sakta hai, toh:
+
+- agar k ∉ S, partial(S, k) = partial(S, k−1);
+- agar k ∈ S, partial(S, k) = partial(S, k−1) + partial(S \ k, k−1).
+
+Yeh ek hi array pe **in place** chalta hai — n · 2ⁿ additions. Book ki values pe sum(\{0, 2\}) = 3 + 1 + 5 + 1 = **10**.
+
+</Hi>
+
+<JavaCode file="ch10/BitmaskDP.java" region="sos" />
+
+<SOSViz client:visible />
+
+<Callout type="insight">
+
+<En>
+
+Flip the condition to get the **superset** sums: `if ((s & (1 << k)) == 0) sum[s] += sum[s | (1 << k)]`. CSES *SOS Bit Problem* needs both: for each x, count the y with x | y = x (subsets), with x & y = x (supersets), and with x & y ≠ 0 (everything minus the subsets of the complement).
+
+</En>
+<Hi>
+
+Condition ulti karo toh **superset** sums milte hain: `if ((s & (1 << k)) == 0) sum[s] += sum[s | (1 << k)]`. CSES *SOS Bit Problem* mein dono chahiye: har x ke liye gino kitne y mein x | y = x (subsets), x & y = x (supersets), aur x & y ≠ 0 (sab minus complement ke subsets).
+
+</Hi>
+
+</Callout>
+
+</Section>
