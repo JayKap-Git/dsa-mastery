@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Interactive study platform for Competitive Programmer's Handbook — Java code, English + Hinglish, step-through visualisers.",
+  "description": "Interactive study platform for Competitive Programmer's Handbook \u2014 Java code, English + Hinglish, step-through visualisers.",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build && pagefind --site dist",
@@ -13,7 +13,8 @@
     "java:test": "bash scripts/java-test.sh",
     "lint:content": "node scripts/lint-content.mjs",
     "extract": "node scripts/extract-book.mjs",
-    "verify": "npm run check && npm run test && npm run java:test && npm run lint:content && npm run build"
+    "verify": "npm run check && npm run test && npm run java:test && npm run lint:content && npm run build",
+    "secret:cloudflare": "pbpaste | tr -d '\\n' | gh secret set CLOUDFLARE_API_TOKEN --repo JayKap-Git/dsa-mastery"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.1",
