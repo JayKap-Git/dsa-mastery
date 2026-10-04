@@ -696,3 +696,20 @@ html:not([data-auth='in']) [data-when-signed-in] { display: none !important; }
 .ts-queries small { color: var(--muted); font-size: 0.72rem; }
 .ts-result { font-size: 1.05rem; margin: 0.8rem 0 0.3rem; }
 .ts-result b { font-family: var(--font-mono); color: var(--ok); }
+
+/* Timeline + general trees */
+.timeline-svg { display: block; }
+.tl-grid { stroke: var(--border); stroke-width: 1; }
+.tl-tick { font: 500 10px var(--font-mono); fill: var(--muted); text-anchor: middle; }
+.tl-label { font: 700 12px var(--font-mono); fill: var(--text-2); }
+.tl-note { font: 600 11px var(--font-mono); fill: var(--muted); }
+.tl-item rect { fill: var(--surface-3); stroke: var(--border-strong); stroke-width: 1.5; transition: fill 0.18s; }
+.tl-item[class*='role-'] rect { fill: var(--r-bg); stroke: var(--r-bd); stroke-width: 2; }
+.tl-item.role-muted rect { opacity: 0.45; }
+.bt-edge { font: 700 11px var(--font-mono); fill: var(--accent); text-anchor: middle; }
+.ms-lab .ms-plot { margin-bottom: 0.8rem; }
+.ms-head { font-size: 0.9rem; margin-bottom: 0.2rem; }
+.ms-curve { fill: none; stroke: var(--accent); stroke-width: 2.5; }
+.ms-best { stroke: var(--ok); stroke-width: 2; stroke-dasharray: 5 4; }
+.ms-dot { fill: var(--active-bg); stroke: var(--active-bd); stroke-width: 2; }
+.ms-point { fill: var(--text-2); }

@@ -1,0 +1,197 @@
+---
+num: 6
+minutes: 70
+prerequisites: [3, 4]
+learn:
+  - en: What makes a greedy choice correct — and how one counterexample kills a wrong greedy idea.
+    hi: Greedy choice kab sahi hoti hai — aur ek counterexample galat greedy idea ko kaise khatam karta hai.
+  - en: Classic proofs — "it is never worse to…" and the exchange argument.
+    hi: Classic proofs — "aisa karna kabhi bura nahi…" aur exchange argument.
+  - en: Scheduling, tasks and deadlines, minimising sums (median and mean), and Huffman coding.
+    hi: Scheduling, tasks aur deadlines, sums minimise karna (median aur mean), aur Huffman coding.
+---
+import CoinViz from '../../viz/algos/ch06/CoinViz';
+import ScheduleViz from '../../viz/algos/ch06/ScheduleViz';
+import TasksViz from '../../viz/algos/ch06/TasksViz';
+import MinSumsLab from '../../viz/algos/ch06/MinSumsLab';
+import HuffmanViz from '../../viz/algos/ch06/HuffmanViz';
+
+<En>
+
+A **greedy algorithm** builds the answer by always making the choice that looks best right now, and never takes a choice back. That makes greedy algorithms short and fast, usually just a sort plus one pass. The hard part is **proving** that the locally best choice is also globally best. Many tempting greedy ideas are simply wrong, and a single small counterexample is enough to prove it.
+
+</En>
+<Hi>
+
+**Greedy algorithm** answer banata hai hamesha woh choice lekar jo abhi sabse achhi lagti hai — aur koi choice wapas nahi leta. Isliye greedy algorithms chhote aur fast hote hain (aksar ek sort + ek pass). Mushkil hissa hai **prove** karna ki abhi ki best choice poore problem ke liye bhi best hai. Kai lubhaavne greedy ideas seedhe galat hote hain — aur yeh dikhane ke liye ek chhota counterexample kaafi hai.
+
+</Hi>
+
+<Section id="6.1" title="Coin problem">
+
+<En>
+
+**Problem:** form the sum n with as few coins as possible, with unlimited coins of each value. The greedy idea is to keep taking the largest coin that fits.
+
+- **With euro coins** `{1, 2, 5, 10, 20, 50, 100, 200}`, greedy is always optimal. For 520 it takes 200 + 200 + 100 + 20. The proof bounds how often each coin can appear in an optimal solution: two 5s can become one 10, three 2s can become 5 + 1, and so on. From that, the smaller coins can never optimally make a sum as large as the next coin.
+- **In general it fails.** With coins `{1, 3, 4}` and n = 6, greedy takes 4 + 1 + 1, but 3 + 3 uses only two coins. Chapter 7 solves the general case with dynamic programming.
+
+</En>
+<Hi>
+
+**Problem:** sum n ko kam se kam coins se banao (har value ke unlimited coins). Greedy idea: baar baar sabse bada coin lo jo fit ho.
+
+- **Euro coins** `{1, 2, 5, 10, 20, 50, 100, 200}` ke saath greedy hamesha optimal hai — 520 ke liye 200 + 200 + 100 + 20. Proof yeh limit karta hai ki optimal solution mein har coin kitni baar aa sakta hai (do 5 ki jagah ek 10, teen 2 ki jagah 5 + 1, …). Isse chhote coins agle coin jitna bada sum kabhi optimally nahi bana sakte.
+- **General case mein fail.** Coins `{1, 3, 4}` aur n = 6: greedy 4 + 1 + 1 leta hai, par 3 + 3 sirf do coins mein ho jaata hai. Chapter 7 general case dynamic programming se solve karta hai.
+
+</Hi>
+
+<JavaCode file="ch06/CoinGreedy.java" region="greedy" />
+
+<CoinViz client:visible />
+
+<Callout type="insight">
+
+<En>
+
+To **reject** a greedy idea, search for a small counterexample, which is often just 2–4 items. To **trust** one, either prove it or compare it against brute force on many small random inputs. Every Java file on this site does the second.
+
+</En>
+<Hi>
+
+Greedy idea ko **reject** karna ho toh chhota counterexample dhundho (aksar 2–4 items). **Bharosa** karna ho toh ya prove karo, ya bahut saare chhote random inputs pe brute force se compare karo — is site ki har Java file doosra kaam karti hai.
+
+</Hi>
+
+</Callout>
+
+</Section>
+
+<Section id="6.2" title="Scheduling">
+
+<En>
+
+**Problem:** given events with start and end times, choose as many non-overlapping events as possible. There are three natural greedy rules, and only one works:
+
+1. **Shortest event first:** fails. A short event can overlap two long ones that would both fit together.
+2. **Earliest start first:** fails. One very long early event can block everything.
+3. **Earliest end first:** always optimal. Ending as early as possible leaves the most room for everything else. Picking any other first event never gives more options afterwards, so it can never lead to a better answer.
+
+</En>
+<Hi>
+
+**Problem:** events ke start aur end times diye hain — zyada se zyada aise events chuno jo overlap na karein. Teen natural greedy rules, sirf ek chalta hai:
+
+1. **Sabse chhota event pehle:** fail — ek chhota event do lambe events se overlap kar sakta hai jo saath mein fit ho jaate.
+2. **Sabse pehle shuru hone wala:** fail — ek bahut lamba jaldi wala event sab kuch rok deta hai.
+3. **Sabse pehle khatam hone wala:** hamesha optimal. Jitna jaldi khatam karoge, baaki ke liye utni hi jagah bachegi. Koi aur pehla event chuno toh aage ke options kabhi zyada nahi hote — toh behtar answer kabhi nahi mil sakta.
+
+</Hi>
+
+<JavaCode file="ch06/Scheduling.java" region="earliestEnd" />
+
+<ScheduleViz client:visible />
+
+</Section>
+
+<Section id="6.3" title="Tasks and deadlines">
+
+<En>
+
+**Problem:** tasks have a duration and a deadline d. Finishing a task at time x earns d − x points, which can be negative. Pick the order that maximises the total.
+
+Surprisingly, the deadlines don't matter at all: **do the tasks shortest first**. The proof is an **exchange argument**. Suppose a task X of length a is directly followed by a shorter task Y of length b. Swapping them makes Y finish a earlier and X finish b later. The total changes by a − b > 0, so the swap helps. An optimal order therefore never has a longer task right before a shorter one, which means it is sorted by duration.
+
+For the book's tasks A(4, 2), B(3, 5), C(2, 7) and D(4, 5), the best order is C, B, A, D, scoring 5 + 0 − 7 − 8 = −10.
+
+</En>
+<Hi>
+
+**Problem:** har task ka duration aur deadline d hai. Time x pe task khatam karne pe d − x points milte hain (negative bhi ho sakte hain). Woh order chuno jisme total sabse zyada ho.
+
+Hairaani ki baat: deadlines ka koi role hi nahi — **tasks shortest-first karo**. Proof ek **exchange argument** hai: maan lo a lambai ka task X theek pehle hai b lambai ke chhote task Y se. Swap karne pe Y a pehle khatam hota hai aur X b baad — total a − b > 0 se badhta hai, yaani swap faydemand hai. Isliye optimal order mein kabhi lamba task chhote se theek pehle nahi hota — matlab woh duration se sorted hai.
+
+Book ke tasks A(4, 2), B(3, 5), C(2, 7), D(4, 5) ka best order C, B, A, D hai: score 5 + 0 − 7 − 8 = −10.
+
+</Hi>
+
+<JavaCode file="ch06/TasksDeadlines.java" region="score" />
+
+<TasksViz client:visible />
+
+</Section>
+
+<Section id="6.4" title="Minimizing sums">
+
+<En>
+
+**Problem:** choose x to minimise the sum over all i of |aᵢ − x|ᶜ.
+
+- **c = 1:** the best x is a **median**. If x is below the median, moving right gets closer to more numbers than it moves away from, and the same holds in the other direction. For `[1, 2, 9, 2, 6]` the median is 2 and the sum is 12. With an even count, anything between the two middle values is optimal.
+- **c = 2:** the best x is the **mean**. Expanding gives nx² − 2x·s + (constant), a parabola that is smallest at x = s/n. For the same list the mean is 4 and the sum is 46.
+
+</En>
+<Hi>
+
+**Problem:** x aisa chuno ki saare i ke liye |aᵢ − x|ᶜ ka sum sabse chhota ho.
+
+- **c = 1:** best x ek **median** hai. x median se neeche ho toh right khiskane pe zyada numbers ke paas aate ho, kam se door jaate ho — doosri taraf bhi yahi baat. `[1, 2, 9, 2, 6]` ka median 2 hai, sum 12. Ginti even ho toh do middle values ke beech kuch bhi optimal hai.
+- **c = 2:** best x **mean** hai. Expand karo: nx² − 2x·s + (constant) — ek parabola jo x = s/n pe sabse chhota hota hai. Usi list ka mean 4, sum 46.
+
+</Hi>
+
+<JavaCode file="ch06/MinimizingSums.java" region="median" />
+
+<MinSumsLab client:visible />
+
+</Section>
+
+<Section id="6.5" title="Data compression">
+
+<En>
+
+A **binary code** gives each character a codeword of bits. Fixed-length codes are simple: 4 characters at 2 bits each turn `AABACDACA` into 18 bits. A **variable-length** code gives frequent characters short codewords. For decoding to be unambiguous, no codeword may be a **prefix** of another (a prefix-free code). If `10` and `1011` were both codewords, `1011` could be read either way.
+
+**Huffman coding** builds an optimal prefix-free code greedily:
+
+1. Start with one node per character, weighted by its frequency.
+2. Repeatedly merge the two lightest trees under a new node whose weight is their sum.
+3. Read each codeword along the path from the root, with left = 0 and right = 1.
+
+For `AABACDACA` this gives A = 0, C = 10, B = 110 and D = 111, so 15 bits instead of 18. A priority queue makes it O(n log n).
+
+</En>
+<Hi>
+
+**Binary code** har character ko bits ka ek codeword deta hai. Fixed-length codes simple hain: 4 characters × 2 bits — `AABACDACA` 18 bits ka. **Variable-length** code frequent characters ko chhote codewords deta hai. Decoding ek hi tarah ho, iske liye koi codeword doosre ka **prefix** nahi hona chahiye (prefix-free code) — agar `10` aur `1011` dono codewords hon, toh `1011` ko do tarah padh sakte ho.
+
+**Huffman coding** greedy tareeke se optimal prefix-free code banata hai:
+
+1. Har character ka ek node, weight = frequency.
+2. Baar baar do sabse halke trees ko ek naye node ke neeche jodo, jiska weight dono ka sum ho.
+3. Har codeword root se path pe padho: left = 0, right = 1.
+
+`AABACDACA` ke liye: A = 0, C = 10, B = 110, D = 111 — 18 ki jagah 15 bits. Priority queue ke saath O(n log n).
+
+</Hi>
+
+<JavaCode file="ch06/Huffman.java" region="build" />
+
+<HuffmanViz client:visible />
+
+<Callout type="java">
+
+<En>
+
+`PriorityQueue` needs a total order. Here it compares weight, then creation id, so ties are deterministic and the codewords match the book exactly. Any tie-break gives an optimal code; only the exact codewords change.
+
+</En>
+<Hi>
+
+`PriorityQueue` ko poora order chahiye — yahan pehle weight, phir creation id compare hota hai, taaki ties fix rahein aur codewords bilkul book jaise aayein. Koi bhi tie-break optimal code deta hai; bas exact codewords badal jaate hain.
+
+</Hi>
+
+</Callout>
+
+</Section>
