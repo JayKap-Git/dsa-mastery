@@ -6,6 +6,12 @@ const { id, title } = Astro.props;
 <section class="book-section" id={sectionAnchor(id)} data-section={id}>
   <h2><span class="sec-no">{id}</span>{title}</h2>
   <slot />
+  <details class="notes-box" data-pagefind-ignore>
+    <summary><span class="tx-en">My notes</span><span class="tx-hi ui" lang="hi-Latn">Mere notes</span><span class="note-dot" aria-hidden="true"></span></summary>
+    <textarea data-note={id} rows="5" maxlength="20000" aria-label={`My notes for ${id} ${title}`}
+      placeholder="Your own words: what clicked, what to remember, mistakes to avoid…"></textarea>
+    <p class="note-status" data-note-status></p>
+  </details>
   <div class="section-done">
     <label>
       <input type="checkbox" data-section-check={id} />

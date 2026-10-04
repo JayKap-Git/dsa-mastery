@@ -43,6 +43,19 @@ import Hi from '../components/Hi.astro';
         This is a personal, non-commercial study project and is not affiliated with the author or CSES.
       </p>
 
+      <h2 id="accounts-and-privacy">Accounts and privacy</h2>
+      <p>
+        Signing in is optional. Without an account, everything you do (sections done, quiz scores, notes, CSES solutions)
+        is saved only in this browser. If you sign in with GitHub, the same data is also stored on this site’s server
+        (a Cloudflare Worker with a D1 database) so it can follow you to other devices.
+      </p>
+      <ul>
+        <li><strong>What is stored:</strong> your GitHub user id, username, display name and avatar URL, plus the study data above. No email address, no GitHub access token, no repository access (sign-in asks for no permissions).</li>
+        <li><strong>Cookies:</strong> one session cookie (<code>sid</code>) on <code>api.jayantkapoor.com</code>, used only to keep you signed in. No analytics or tracking cookies.</li>
+        <li><strong>Sharing:</strong> your data is never shared or sold, and notes and solutions are visible only to you.</li>
+        <li><strong>Control:</strong> on <a href="/me/">My study</a> you can export everything as JSON or permanently delete your account and all its data.</li>
+      </ul>
+
       <h2>Java conventions</h2>
       <p>
         Every Java snippet comes from a real file that compiles with <code>javac --release 11</code> (safe on online judges) and runs

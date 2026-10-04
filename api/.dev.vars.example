@@ -1,0 +1,7 @@
+# Copy to .dev.vars for local development (`npm run dev` in api/). Never commit .dev.vars.
+GITHUB_CLIENT_ID=your-dev-oauth-app-client-id
+GITHUB_CLIENT_SECRET=your-dev-oauth-app-client-secret
+SESSION_SECRET=any-long-random-string-for-local-dev
+APP_URL=http://localhost:4321
+# Enables POST /auth/dev-login for local end-to-end tests. Never set in production.
+DEV_LOGIN=true

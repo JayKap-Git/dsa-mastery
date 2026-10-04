@@ -3,11 +3,14 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Tx from '../components/Tx.astro';
 import { CHAPTERS, PARTS, chapterByNum } from '../data/catalog';
+import type { ChapterExtras } from '../data/types';
 
 const ready = new Set((await getCollection('chapters')).map((e) => chapterByNum(e.data.num)!.slug));
 const first = CHAPTERS.find((c) => ready.has(c.slug));
 const totalSections = CHAPTERS.filter((c) => ready.has(c.slug)).reduce((s, c) => s + c.sections.length, 0);
 const parts = [1, 2, 3] as const;
+const extrasModules = import.meta.glob<{ default: ChapterExtras }>('../data/chapters/ch*.ts', { eager: true });
+const extras = new Map(Object.entries(extrasModules).map(([path, m]) => [Number(path.match(/ch(\d+)\.ts$/)![1]), m.default.practice.map((p) => p.id)]));
 ---
 <BaseLayout title="DSA Mastery" active="chapters">
   <main id="main" class="page">
@@ -31,16 +34,21 @@ const parts = [1, 2, 3] as const;
       </div>
       <div class="hero-card">
         <div class="stat-row">
-          <div class="stat"><b>{ready.size}<span class="muted" style="font-size:0.9rem">/30</span></b><small><Tx ui v={{ en: 'chapters live', hi: 'chapters ready' }} /></small></div>
           <div class="stat"><b data-stat="sections">0</b><small><Tx ui v={{ en: `of ${totalSections} sections done`, hi: `${totalSections} mein se sections done` }} /></small></div>
-          <div class="stat"><b data-stat="quizzes">0</b><small><Tx ui v={{ en: 'quizzes taken', hi: 'quizzes diye' }} /></small></div>
+          <div class="stat"><b data-stat="streak">0</b><small><Tx ui v={{ en: 'day streak', hi: 'din ki streak' }} /></small></div>
+          <div class="stat"><b data-stat="solved">0</b><small><Tx ui v={{ en: 'CSES solved', hi: 'CSES solved' }} /></small></div>
         </div>
-        <p class="muted" style="margin:0;font-size:0.88rem">
-          <Tx v={{ en: 'Progress is saved in this browser. Move it to another device with export/import:', hi: 'Progress isi browser mein save hota hai. Doosre device pe le jaane ke liye export/import karo:' }} />
-        </p>
-        <div class="hero-actions">
-          <button class="btn" type="button" data-export-progress><Tx ui v={{ en: 'Export progress', hi: 'Progress export' }} /></button>
-          <label class="btn" style="cursor:pointer"><Tx ui v={{ en: 'Import', hi: 'Import' }} /><input type="file" accept="application/json" data-import-progress hidden /></label>
+        <div>
+          <div class="meter-label"><span><Tx ui v={{ en: 'Study activity · last 16 weeks', hi: 'Study activity · pichhle 16 hafte' }} /></span></div>
+          <div class="heatmap" data-heatmap aria-label="Days you studied in the last 16 weeks"></div>
+        </div>
+        <div class="account-card" data-when-signed-out>
+          <p><Tx v={{ en: 'Progress is saved in this browser. Sign in to sync your progress, notes and CSES solutions across all your devices.', hi: 'Progress abhi sirf is browser mein save hai. Sign in karo toh progress, notes aur CSES solutions tumhare saare devices pe sync honge.' }} /></p>
+          <button class="btn primary" type="button" data-signin><Tx ui v={{ en: 'Sign in with GitHub', hi: 'GitHub se sign in' }} /></button>
+        </div>
+        <div class="account-card" data-when-signed-in>
+          <p class="sync-line"><span class="sync-dot" data-sync-dot data-state="off"></span><span>Signed in as <b data-login></b> · <span data-sync-text></span></span></p>
+          <a class="btn" href="/me/"><Tx ui v={{ en: 'My study: notes, solutions, export', hi: 'My study: notes, solutions, export' }} /> →</a>
         </div>
       </div>
     </section>
@@ -64,8 +72,8 @@ const parts = [1, 2, 3] as const;
                 <h3>{c.title}</h3>
                 <p><Tx v={c.blurb} /></p>
                 {live && (
-                  <div class="card-foot" data-progress-chapter={c.slug} data-total={c.sections.length}>
-                    <div class="meter-label"><span data-progress-text>0/{c.sections.length}</span><span data-quiz-text></span></div>
+                  <div class="card-foot" data-progress-chapter={c.slug} data-total={c.sections.length} data-cses-ids={(extras.get(c.num) ?? []).join(',')}>
+                    <div class="meter-label"><span data-progress-text>0/{c.sections.length}</span><span><span data-quiz-text></span> <span data-solved-text></span></span></div>
                     <div class="meter"><span></span></div>
                   </div>
                 )}

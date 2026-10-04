@@ -4,9 +4,25 @@ Interactive study site for *Competitive Programmer's Handbook* (Antti Laaksonen,
 Astro 7 static site + React islands, deployed by GitHub Actions to GitHub Pages at **dsa.jayantkapoor.com**.
 The reader is Jayant: intermediate DSA, writes **Java only**, wants English + **Hinglish** explanations.
 
+## Accounts and sync (stateful layer)
+- The site stays static. State lives in `src/lib/store/` (offline-first, localStorage) and syncs to the
+  **Worker in `api/`** (Hono + D1) at `api.jayantkapoor.com` when the user signs in with GitHub.
+- Every synced thing is an **item** `(kind, key, value, updatedAt)`; rules + limits in `src/lib/store/kinds.ts`,
+  shared by client and Worker. Merge = last-writer-wins on `updatedAt` (quiz attempts are append-only keys).
+  New kind? Add it to `kinds.ts` (key regex + value check), then selectors/actions in `selectors.ts`.
+- UI code never touches localStorage directly: read with selectors, write with the actions in `selectors.ts`,
+  re-render via `subscribe()` (vanilla, in `src/scripts/ui/*`) or `useStore()` (React).
+- Anonymous visitors make **zero** API calls; only a browser that signed in before calls `/me` and syncs.
+- `api/`: `npm run dev` (local D1 + `wrangler dev` on :8787, uses `.dev.vars` with `DEV_LOGIN=true`),
+  `npm test` (Workers runtime via @cloudflare/vitest-pool-workers), `npm run typecheck`, `npm run deploy`.
+  Schema changes = a new file in `api/migrations/` (never edit an applied one).
+- Local end-to-end: run `npm run dev` in both `api/` and the root, then drive two Chrome profiles with
+  `node scripts/shoot.mjs <url> out.png --profile <dir> --pre "<dev-login fetch>" --eval "<checks>"`.
+
 ## Commands
 - `npm run dev` / `npm run build` (astro build + pagefind) / `npm run preview`
 - `npm run verify` — astro check → vitest → Java tests → content lint → build. Must pass before every commit.
+  Also run `npm test` and `npm run typecheck` in `api/` when touching the store or the Worker.
 - `npm run java:test` — compiles `java/src/**` with `javac --release 11 -Xlint:all -Werror`, runs every `main()`.
 - `npm run lint:content` — En/Hi pairing, book section ids, Java regions, extras sizes, CSES ids, playground registry.
 - `npm run extract` — dumps the book into `.book-text/chNN.txt` (gitignored; needs `book.pdf`, macOS PDFKit).

@@ -1,0 +1,71 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Tx from '../components/Tx.astro';
+import { getCollection } from 'astro:content';
+import { CHAPTERS, chapterByNum } from '../data/catalog';
+import type { ChapterExtras } from '../data/types';
+import cses from '../data/cses.json';
+
+const ready = new Set((await getCollection('chapters')).map((e) => chapterByNum(e.data.num)!.slug));
+const extrasModules = import.meta.glob<{ default: ChapterExtras }>('../data/chapters/ch*.ts', { eager: true });
+const practice = new Map(Object.entries(extrasModules).map(([path, m]) => [Number(path.match(/ch(\d+)\.ts$/)![1]), m.default.practice.map((p) => p.id)]));
+const data = {
+  chapters: CHAPTERS.map((c) => ({ slug: c.slug, num: c.num, title: c.title, ready: ready.has(c.slug), sections: c.sections, cses: practice.get(c.num) ?? [] })),
+  cses: Object.fromEntries(Object.values(cses as unknown as Record<string, [number, string][]>).flat().map(([id, name]) => [String(id), name])),
+};
+---
+<BaseLayout title="My study" active="me">
+  <main id="main" class="page">
+    <div class="narrow me">
+      <header class="me-head">
+        <div class="me-id" data-when-signed-in>
+          <img data-avatar alt="" width="64" height="64" hidden /><span class="avatar-fallback big" data-avatar-fallback>?</span>
+          <div>
+            <h1 data-user-name>My study</h1>
+            <p class="muted"><span data-login></span> · <span class="sync-line"><span class="sync-dot" data-sync-dot data-state="off"></span><span data-sync-text></span></span></p>
+          </div>
+        </div>
+        <div data-when-signed-out>
+          <h1>My study</h1>
+          <p class="muted"><Tx v={{ en: 'You’re not signed in, so this shows what’s saved in this browser only. Sign in with GitHub to keep it in sync across devices.', hi: 'Tum sign in nahi ho, isliye yahan sirf is browser ka data dikh raha hai. GitHub se sign in karo toh sab devices pe sync rahega.' }} /></p>
+          <button class="btn primary" type="button" data-signin><Tx ui v={{ en: 'Sign in with GitHub', hi: 'GitHub se sign in' }} /></button>
+        </div>
+      </header>
+
+      <div class="stat-row me-stats">
+        <div class="stat"><b data-me-stat="streak">0</b><small><Tx ui v={{ en: 'day streak', hi: 'din ki streak' }} /></small></div>
+        <div class="stat"><b data-me-stat="solved">0</b><small><Tx ui v={{ en: 'CSES solved', hi: 'CSES solved' }} /></small></div>
+        <div class="stat"><b data-me-stat="notes">0</b><small><Tx ui v={{ en: 'notes', hi: 'notes' }} /></small></div>
+      </div>
+
+      <section>
+        <h2><Tx ui v={{ en: 'Progress by chapter', hi: 'Chapter-wise progress' }} /></h2>
+        <div class="cx"><table>
+          <thead><tr><th>Chapter</th><th>Sections</th><th>Best quiz</th><th>CSES solved</th></tr></thead>
+          <tbody data-me-chapters></tbody>
+        </table></div>
+      </section>
+
+      <section>
+        <h2><Tx ui v={{ en: 'My notes', hi: 'Mere notes' }} /></h2>
+        <div class="me-notes" data-me-notes></div>
+      </section>
+
+      <section>
+        <h2><Tx ui v={{ en: 'My CSES solutions', hi: 'Mere CSES solutions' }} /></h2>
+        <div class="me-sols" data-me-cses></div>
+      </section>
+
+      <section class="me-danger">
+        <h2><Tx ui v={{ en: 'Your data', hi: 'Tumhara data' }} /></h2>
+        <div class="hero-actions">
+          <button class="btn" type="button" data-export-account><Tx ui v={{ en: 'Export as JSON', hi: 'JSON export' }} /></button>
+          <button class="btn" type="button" data-signout data-when-signed-in><Tx ui v={{ en: 'Sign out', hi: 'Sign out' }} /></button>
+          <button class="btn danger" type="button" data-delete-account data-when-signed-in><Tx ui v={{ en: 'Delete account', hi: 'Account delete' }} /></button>
+        </div>
+        <p class="muted"><a href="/about/#accounts-and-privacy">What’s stored and why</a></p>
+      </section>
+    </div>
+    <script type="application/json" id="me-data" set:html={JSON.stringify(data)} />
+  </main>
+</BaseLayout>

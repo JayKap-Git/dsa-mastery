@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dsa-mastery-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-22",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  // api.jayantkapoor.com — Cloudflare creates the DNS record and certificate on deploy.
+  "routes": [{ "pattern": "api.jayantkapoor.com", "custom_domain": true }],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "dsa-mastery",
+      // Filled in after `wrangler d1 create dsa-mastery`; any value works for local dev and tests.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "APP_URL": "https://dsa.jayantkapoor.com",
+    "ALLOWED_ORIGINS": "https://dsa.jayantkapoor.com,http://localhost:4321,http://localhost:4329",
+    "GITHUB_CLIENT_ID": "set-after-creating-the-oauth-app"
+  }
+  // Secrets (never in this file): GITHUB_CLIENT_SECRET, SESSION_SECRET.
+  // Local dev: api/.dev.vars (gitignored) also sets DEV_LOGIN=true and dev values for the vars above.
+}

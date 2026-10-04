@@ -85,7 +85,10 @@ const prereq = prerequisites.map((n) => CHAPTERS.find((c) => c.num === n)!).filt
           </section>
           <section class="end-block" id="practice">
             <h2><Tx ui v={{ en: 'Practice on CSES', hi: 'CSES pe practice karo' }} /></h2>
-            <p class="sub"><Tx v={{ en: 'The CSES Problem Set is the book’s companion. Solve these in Java, roughly in this order.', hi: 'CSES Problem Set is book ka saathi hai. Inhe Java mein solve karo, lagbhag isi order mein.' }} /></p>
+            <p class="sub">
+              <Tx v={{ en: 'The CSES Problem Set is the book’s companion. Solve these in Java, roughly in this order, and track them here.', hi: 'CSES Problem Set is book ka saathi hai. Inhe Java mein solve karo, lagbhag isi order mein, aur yahin track karo.' }} />
+              <b class="cses-count" data-cses-count={extras.practice.map((p) => p.id).join(',')}></b>
+            </p>
             <PracticeList problems={extras.practice} />
           </section>
         </>}

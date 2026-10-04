@@ -9,11 +9,13 @@ import Icon from '../components/Icon.astro';
 interface Props {
   title: string;
   description?: string;
-  active?: 'chapters' | 'playground' | 'revision' | 'about';
+  active?: 'chapters' | 'playground' | 'revision' | 'about' | 'me';
 }
 const { title, description = 'Interactive study platform for Competitive Programmer’s Handbook — Java code, English + Hinglish explanations, step-through visualisers.', active } = Astro.props;
 const fullTitle = title === 'DSA Mastery' ? title : `${title} · DSA Mastery`;
 const canonical = new URL(Astro.url.pathname, Astro.site);
+// GitHub mark (for the "Sign in with GitHub" button).
+const GITHUB_MARK = 'M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3';
 const nav = [
   { key: 'chapters', href: '/', label: 'Chapters' },
   { key: 'playground', href: '/playground/', label: 'Playground' },
@@ -49,6 +51,8 @@ const nav = [
           if (l === 'en' || l === 'hi' || l === 'both') lang = l;
           var t = localStorage.getItem('dsa-mastery:theme');
           if (t === 'light' || t === 'dark') d.dataset.theme = t;
+          var u = localStorage.getItem('dsa-mastery:user:v2');
+          d.dataset.auth = u && u !== 'null' ? 'in' : 'out';
         } catch (e) {
           if (/^(en|hi|both)$/.test(q.get('lang') || '')) lang = q.get('lang');
           if (/^(light|dark)$/.test(q.get('theme') || '')) d.dataset.theme = q.get('theme');
@@ -76,9 +80,26 @@ const nav = [
             <button type="button" data-set-lang="hi" aria-pressed="false" title="Hinglish">HI</button>
             <button type="button" data-set-lang="both" aria-pressed="false" title="English + Hinglish">Both</button>
           </div>
-          <button class="icon-btn" type="button" data-toggle-theme aria-label="Toggle dark mode">
+          <button class="icon-btn theme-btn" type="button" data-toggle-theme aria-label="Toggle dark mode">
             <span class="theme-icon moon"><Icon name="moon" /></span><span class="theme-icon sun"><Icon name="sun" /></span>
           </button>
+          <div class="account">
+            <button class="signin-btn" type="button" data-signin data-when-signed-out title="Sign in with GitHub to sync across devices">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d={GITHUB_MARK} /></svg><span>Sign in</span>
+            </button>
+            <div class="account-menu" data-when-signed-in>
+              <button class="avatar-btn" type="button" data-account-toggle aria-haspopup="menu" aria-expanded="false" aria-label="Account">
+                <img data-avatar alt="" width="30" height="30" hidden /><span class="avatar-fallback" data-avatar-fallback>?</span>
+                <span class="sync-dot" data-sync-dot data-state="off"></span>
+              </button>
+              <div class="account-pop" data-account-pop role="menu" hidden>
+                <div class="who"><b data-user-name></b><span class="muted" data-login></span></div>
+                <p class="sync-line"><span class="sync-dot" data-sync-dot data-state="off"></span><span data-sync-text></span></p>
+                <a href="/me/" role="menuitem">My study</a>
+                <button type="button" role="menuitem" data-signout>Sign out</button>
+              </div>
+            </div>
+          </div>
           <button class="icon-btn menu-btn" type="button" data-toggle-menu aria-expanded="false" aria-controls="mobile-nav" aria-label="Menu">
             <Icon name="menu" />
           </button>
@@ -87,9 +108,13 @@ const nav = [
     </header>
     <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile">
       {nav.map((n) => <a href={n.href} aria-current={active === n.key ? 'page' : undefined}>{n.label}</a>)}
+      <a href="/me/" aria-current={active === 'me' ? 'page' : undefined}>My study</a>
+      <button type="button" class="mobile-nav-btn" data-toggle-theme>Toggle dark mode</button>
     </nav>
 
     <slot />
+
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
     <footer class="site-footer">
       <div class="inner">

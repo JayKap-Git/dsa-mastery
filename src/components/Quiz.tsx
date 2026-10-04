@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { QuizQuestion } from '../data/types';
 import { T } from '../viz/engine/T';
-import { recordQuiz } from '../lib/progress';
+import { bestQuiz, quizHistory, recordQuiz } from '../lib/store/selectors';
+import { useStore } from '../lib/store/useStore';
 
 const KIND = {
   concept: { en: 'concept', hi: 'concept' },
@@ -15,6 +16,7 @@ export default function Quiz({ chapter, questions }: { chapter: string; question
   const answered = picked.filter((p) => p !== null).length;
   const score = picked.filter((p, i) => p === questions[i].answer).length;
   const finished = answered === questions.length;
+  const past = useStore(() => ({ best: bestQuiz(chapter), attempts: quizHistory(chapter).length }));
 
   useEffect(() => {
     if (finished) recordQuiz(chapter, score, questions.length);
@@ -63,6 +65,11 @@ export default function Quiz({ chapter, questions }: { chapter: string; question
             ? <T v={{ en: `Score: ${score}/${questions.length} — saved to your progress.`, hi: `Score: ${score}/${questions.length} — progress mein save ho gaya.` }} />
             : <T v={{ en: `Answered ${answered} of ${questions.length}.`, hi: `${questions.length} mein se ${answered} answer kiye.` }} />}
         </span>
+        {past?.best && (
+          <span className="q-best">
+            <T v={{ en: `Best ${past.best.score}/${past.best.total} · ${past.attempts} attempt${past.attempts === 1 ? '' : 's'}`, hi: `Best ${past.best.score}/${past.best.total} · ${past.attempts} attempt` }} ui />
+          </span>
+        )}
         {answered > 0 && (
           <button type="button" className="btn-ghost" onClick={() => setPicked(questions.map(() => null))}>
             <T v={{ en: 'Try again', hi: 'Phir se try karo' }} ui />

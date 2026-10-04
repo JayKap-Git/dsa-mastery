@@ -14,11 +14,21 @@ for (const p of problems) {
 ---
 <ol class="practice">
   {problems.map((p) => (
-    <li>
+    <li data-cses={p.id} data-status="todo">
       <span class={`level ${p.level}`}>{p.level}</span>
       <a href={`https://cses.fi/problemset/task/${p.id}`} rel="noopener" target="_blank">{p.name}</a>
-      <span class="sec">§{p.section}</span>
-      <span class="note"><Tx v={p.note} /></span>
+      <select data-cses-status aria-label={`Status of ${p.name}`}>
+        <option value="todo">To do</option>
+        <option value="attempted">Attempted</option>
+        <option value="solved">Solved ✓</option>
+      </select>
+      <span class="note"><span class="sec">§{p.section}</span> <Tx v={p.note} /></span>
+      <details class="cses-code" data-pagefind-ignore>
+        <summary>My Java solution</summary>
+        <textarea data-cses-code rows="12" spellcheck="false" maxlength="64000" aria-label={`My Java solution for ${p.name}`}
+          placeholder="Paste your Java solution. It’s saved as you type and syncs when you’re signed in."></textarea>
+        <p class="note-status" data-cses-saved></p>
+      </details>
     </li>
   ))}
 </ol>

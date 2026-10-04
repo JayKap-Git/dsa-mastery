@@ -3,6 +3,8 @@
 //
 //   node scripts/shoot.mjs <url> <out.png> [--w 1440] [--h 900] [--mobile] [--full]
 //                          [--scroll "#s9-3"] [--eval "js to run before capture"] [--wait 1500]
+//                          [--pre "js to run once, then reload the page"]   (e.g. sign in, then reload)
+//                          [--profile dir]   reuse a Chrome profile (same "device" across runs)
 //
 // Exit code 1 if the page threw or logged console errors.
 import { spawn } from 'node:child_process';
@@ -29,7 +31,7 @@ const WAIT = Number(opt('wait', 1500));
 const CHROME = process.env.CHROME ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const chrome = spawn(CHROME, [
   '--headless=new', '--disable-gpu', '--hide-scrollbars', '--no-first-run', '--no-default-browser-check',
-  '--remote-debugging-port=0', `--user-data-dir=${mkdtempSync(join(tmpdir(), 'shoot-'))}`, 'about:blank',
+  '--remote-debugging-port=0', `--user-data-dir=${opt('profile') || mkdtempSync(join(tmpdir(), 'shoot-'))}`, 'about:blank',
 ]);
 
 const wsUrl = await new Promise((resolve, reject) => {
@@ -85,6 +87,15 @@ await s('Page.navigate', { url });
 await loaded;
 const evalJs = async (expression) => (await s('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true })).result?.value;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+if (opt('pre')) {
+  await sleep(WAIT);
+  const r = await evalJs(`(async () => { ${opt('pre')} })()`);
+  if (r !== undefined) console.log('pre →', JSON.stringify(r));
+  const reloaded = once('Page.loadEventFired');
+  await s('Page.reload', {});
+  await reloaded;
+}
 
 if (opt('full')) {
   // Grow the viewport to the whole page so every client:visible island hydrates, then capture it all.
