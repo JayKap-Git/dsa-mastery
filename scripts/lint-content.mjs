@@ -43,6 +43,23 @@ for (const name of readdirSync(chapterDir).filter((f) => f.endsWith('.mdx'))) {
     if (hi[2].trim() === en[2].trim()) fail(`${where}:${line}`, '<Hi> block is identical to <En>');
   }
 
+  // 1b. A bare { or } in prose is parsed as a JavaScript expression by MDX: escape it as \{ \} or use code.
+  {
+    const body = src.split('\n');
+    let inFront = false, inMath = false, inTag = false;
+    body.forEach((raw, i) => {
+      if (i === 0 && raw === '---') { inFront = true; return; }
+      if (inFront) { if (raw === '---') inFront = false; return; }
+      if (raw.trim() === '$$') { inMath = !inMath; return; }
+      // A component tag spread over several lines (props like rows={[...]}) is JSX, not prose.
+      if (inTag) { if (/>\s*$/.test(raw)) inTag = false; return; }
+      if (/^\s*<[A-Z]\w*\b/.test(raw) && !/>\s*$/.test(raw)) { inTag = true; return; }
+      if (inMath || /^\s*(import |<|\$\$)/.test(raw)) return;
+      const prose = raw.replace(/`[^`]*`/g, '').replace(/\$[^$]*\$/g, '').replace(/\\[{}]/g, '');
+      if (/[{}]/.test(prose)) fail(`${where}:${i + 1}`, 'unescaped { or } in prose (write \\{ \\} or put it in `code`)');
+    });
+  }
+
   // 2. Sections match the book's numbering exactly.
   const ids = [...src.matchAll(/<Section id="([\d.]+)"/g)].map((m) => m[1]);
   const want = meta.sections.map((s) => s.id);

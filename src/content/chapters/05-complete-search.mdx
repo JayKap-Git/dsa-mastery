@@ -1,0 +1,236 @@
+---
+num: 5
+minutes: 75
+prerequisites: [2, 3]
+learn:
+  - en: Generate every subset and every permutation — recursively, with bitmasks, and with nextPermutation.
+    hi: Har subset aur har permutation generate karna — recursion se, bitmasks se, aur nextPermutation se.
+  - en: Backtracking — build a solution step by step and undo when it can't work (n queens).
+    hi: Backtracking — solution step by step banao aur kaam na bane toh undo karo (n queens).
+  - en: Pruning — cut hopeless branches early; one example goes from 483 s to 0.6 s.
+    hi: Pruning — bekaar branches jaldi kaato; ek example 483 s se 0.6 s tak aata hai.
+  - en: Meet in the middle — turn 2ⁿ work into about 2^(n/2).
+    hi: Meet in the middle — 2ⁿ ka kaam lagbhag 2^(n/2) mein badalna.
+---
+import GenerateViz from '../../viz/algos/ch05/GenerateViz';
+import QueensViz from '../../viz/algos/ch05/QueensViz';
+import GridPathsLab from '../../viz/algos/ch05/GridPathsLab';
+import MitmViz from '../../viz/algos/ch05/MitmViz';
+
+<En>
+
+**Complete search** means trying every possible solution and keeping the best one, or counting them. It works for almost any problem, it's easy to write, and it's always correct. The only question is whether there's time. Use the input limits from chapter 2: n ≤ 20 hints at 2ⁿ subsets and n ≤ 10 at n! permutations. When it's too slow, the rest of the book (greedy, dynamic programming, …) takes over.
+
+</En>
+<Hi>
+
+**Complete search** ka matlab: har possible solution try karo, phir best rakho ya sabko gino. Yeh lagbhag har problem pe chalta hai, likhna aasaan hai, aur hamesha sahi answer deta hai — bas sawaal yeh hai ki time hai ya nahi. Chapter 2 ki input limits dekho: n ≤ 20 matlab shayad 2ⁿ subsets, n ≤ 10 matlab n! permutations. Jab yeh slow pade, tab book ka baaki hissa (greedy, dynamic programming, …) kaam aata hai.
+
+</Hi>
+
+<Section id="5.1" title="Generating subsets">
+
+<En>
+
+**Method 1, recursion:** `search(k)` decides element k. First it leaves k out, then takes it, recursing on k + 1 each time, and `k == n` means one complete subset. The calls form a binary tree with 2ⁿ leaves, one per subset.
+
+**Method 2, bitmasks:** each subset of \{0, …, n−1\} is an n-bit number b. Bit i is 1 exactly when element i is in the subset. Looping b from 0 to 2ⁿ − 1 visits every subset. For example, 25 = 11001₂ means \{0, 3, 4\}.
+
+</En>
+<Hi>
+
+**Method 1, recursion:** `search(k)` element k ka faisla karta hai — pehle k ko chhodta hai, phir leta hai, aur dono baar k + 1 pe recurse karta hai. `k == n` matlab ek poora subset ban gaya. Calls ek binary tree banate hain jiske 2ⁿ leaves hain — har subset ke liye ek.
+
+**Method 2, bitmasks:** \{0, …, n−1\} ka har subset ek n-bit number b hai: bit i = 1 tabhi jab element i subset mein hai. b ko 0 se 2ⁿ − 1 tak chalao, har subset mil jayega. Jaise 25 = 11001₂ matlab \{0, 3, 4\}.
+
+</Hi>
+
+<JavaCode file="ch05/Generate.java" region="subsets" />
+<JavaCode file="ch05/Generate.java" region="bitmask" />
+
+<GenerateViz client:visible />
+
+<Callout type="java">
+
+<En>
+
+`1 << n` is an `int`, so it only works up to n = 30. For bigger masks use `long` and `1L << i`; writing `1 << i` with a `long` mask is a classic silent bug once i ≥ 31. Copy the subset before storing it (`new ArrayList<>(subset)`), because the recursion keeps changing the same list.
+
+</En>
+<Hi>
+
+`1 << n` ek `int` hai — sirf n = 30 tak chalta hai. Bade masks ke liye `long` aur `1L << i` lo; `long` mask ke saath `1 << i` likhna i ≥ 31 pe classic silent bug hai. Subset store karne se pehle copy karo (`new ArrayList<>(subset)`), kyunki recursion wahi list badalta rehta hai.
+
+</Hi>
+
+</Callout>
+
+</Section>
+
+<Section id="5.2" title="Generating permutations">
+
+<En>
+
+**Method 1, recursion:** fill the permutation one position at a time. At each step, try every element not yet `chosen`, recurse, then undo. This visits all n! permutations in lexicographic order.
+
+**Method 2, next permutation:** start from the sorted order and repeatedly step to the next permutation. C++ has `next_permutation`, but Java doesn't, so here it is:
+
+1. Find the longest non-increasing suffix.
+2. Swap the element just before it with the rightmost larger element.
+3. Reverse the suffix.
+
+It also handles duplicates correctly, generating each distinct arrangement once.
+
+</En>
+<Hi>
+
+**Method 1, recursion:** permutation ek-ek position bharo. Har step pe har woh element try karo jo abhi `chosen` nahi hai, recurse karo, phir undo. Saare n! permutations lexicographic order mein milte hain.
+
+**Method 2, next permutation:** sorted order se shuru karo aur baar baar agle permutation pe jao. C++ mein `next_permutation` hai, Java mein nahi — toh yeh raha:
+
+1. Sabse lamba non-increasing suffix dhundho.
+2. Usse theek pehle wale element ko suffix ke sabse right wale bade element se swap karo.
+3. Suffix ulta kar do.
+
+Duplicates ko bhi sahi sambhalta hai — har distinct arrangement ek hi baar.
+
+</Hi>
+
+<JavaCode file="ch05/Generate.java" region="permutations" />
+<JavaCode file="ch05/Generate.java" region="next" />
+
+</Section>
+
+<Section id="5.3" title="Backtracking">
+
+<En>
+
+**Backtracking** builds a solution step by step and abandons a partial solution as soon as it breaks a rule. Then it **undoes** the last step and tries the next option.
+
+**n queens:** count the ways to place n queens on an n × n board so that no two attack each other. Place one queen per row. Three boolean arrays remember which columns and diagonals are taken:
+
+- `column[x]` for each column;
+- `diag1[x + y]`, because x + y is constant along one diagonal direction;
+- `diag2[x − y + n − 1]`, the same for the other direction.
+
+That way each check is O(1). The answers grow fast: q(4) = 2, q(8) = 92, and q(16) = 14,772,512 already takes about a minute.
+
+</En>
+<Hi>
+
+**Backtracking** solution ko step by step banata hai, aur jaise hi koi partial solution rule todta hai, use chhod deta hai — aakhri step **undo** karke agla option try karta hai.
+
+**n queens:** n × n board pe n queens aise rakho ki koi kisi pe attack na kare — kitne tareeke? Har row mein ek queen. Teen boolean arrays yaad rakhte hain kaunse columns aur diagonals bhare hain:
+
+- har column ke liye `column[x]`;
+- `diag1[x + y]` — ek diagonal direction mein x + y constant rehta hai;
+- `diag2[x − y + n − 1]` — doosri direction ke liye wahi.
+
+Isliye har check O(1). Answers tezi se badhte hain: q(4) = 2, q(8) = 92, aur q(16) = 14,772,512 mein lagbhag ek minute lag jaata hai.
+
+</Hi>
+
+<JavaCode file="ch05/NQueens.java" region="backtrack" />
+
+<QueensViz client:visible />
+
+</Section>
+
+<Section id="5.4" title="Pruning the search">
+
+<En>
+
+**Pruning** adds intelligence: notice as early as possible that a partial solution can't be completed, and stop exploring it.
+
+The book's example counts paths through an n × n grid, from the upper-left to the lower-right corner, that visit every square exactly once. A 7 × 7 grid has 111,712 of them. Four simple observations take the search from 483 s to 0.6 s:
+
+1. **Symmetry:** the first move is down or right, and the two cases mirror each other, so explore only "down" and double the count.
+2. **Too early:** reaching the corner before visiting everything ends the path, because it can't be completed.
+3. **Wall split:** if a wall blocks the way forward but both left and right are free, the unvisited squares are cut into two parts. Only one can be reached, so stop.
+4. **Any split:** the same when the path itself (not just a wall) blocks the way ahead.
+
+</En>
+<Hi>
+
+**Pruning** dimaag lagata hai: jitni jaldi ho sake pehchano ki ek partial solution poora nahi ho sakta, aur use explore karna band karo.
+
+Book ka example n × n grid mein upper-left se lower-right corner tak aise paths ginta hai jo har square theek ek baar visit karein — 7 × 7 mein aise 111,712 hain. Chaar simple observations search ko 483 s se 0.6 s tak le aate hain:
+
+1. **Symmetry:** pehla move neeche ya right — dono ek-doosre ka mirror hain, toh sirf "neeche" explore karo aur count double kar do.
+2. **Bahut jaldi:** saare squares visit karne se pehle corner pe pahunche toh path wahin khatam — poora ho hi nahi sakta.
+3. **Wall split:** aage wall hai par left aur right dono free hain — bache hue squares do hisson mein kat gaye. Ek hi tak pahunch sakte ho, toh ruko.
+4. **Koi bhi split:** wahi baat jab aage ka raasta path khud (sirf wall nahi) rok raha ho.
+
+</Hi>
+
+<JavaCode file="ch05/GridPaths.java" region="search" />
+
+<GridPathsLab client:visible />
+
+<Callout type="insight">
+
+<En>
+
+Optimisations near the **top** of the search tree matter most. A branch cut after two steps removes everything below it. That's why the split rules, which fire early and often, gave a 100× jump while symmetry gave only 2×.
+
+</En>
+<Hi>
+
+Search tree ke **upar** wale optimisations sabse zyada matter karte hain — do steps baad kata branch apne neeche ka sab kuch hata deta hai. Isi liye split rules (jo jaldi aur baar-baar lagte hain) ne 100× ka jump diya, jabki symmetry ne sirf 2×.
+
+</Hi>
+
+</Callout>
+
+</Section>
+
+<Section id="5.5" title="Meet in the middle">
+
+<En>
+
+**Meet in the middle** splits the search space into two halves, searches each half separately, then combines the results efficiently. It typically turns 2ⁿ into about 2^(n/2): for n = 40, that's 10⁶ work per half instead of 10¹².
+
+**Subset sum:** can some numbers of the list add up to x?
+
+1. Split the list into A and B.
+2. List all subset sums S_A and S_B, sorted.
+3. Ask whether some s_a + s_b = x. Two pointers do it in linear time: start with the smallest of S_A and the largest of S_B, and move whichever side brings the sum closer to x.
+
+For [2, 4, 5, 9] and x = 15: S_A = [0, 2, 4, 6] and S_B = [0, 5, 9, 14], and 6 + 9 = 15, which is the subset \{2, 4, 9\}.
+
+</En>
+<Hi>
+
+**Meet in the middle** search space ko do hisson mein baant-ta hai, dono ko alag search karta hai, phir results ko efficiently jodta hai. Aam taur pe 2ⁿ ko lagbhag 2^(n/2) bana deta hai — n = 40 pe 10¹² ki jagah har half pe 10⁶.
+
+**Subset sum:** kya list ke kuch numbers ka sum x ban sakta hai?
+
+1. List ko A aur B mein todo.
+2. Saare subset sums S_A aur S_B nikaalo, sorted.
+3. Poocho: kya koi s_a + s_b = x? Two pointers isse linear time mein karte hain: S_A ke sabse chhote aur S_B ke sabse bade se shuru karo, aur jo side sum ko x ke paas laaye use khiskao.
+
+[2, 4, 5, 9] aur x = 15 ke liye: S_A = [0, 2, 4, 6], S_B = [0, 5, 9, 14], aur 6 + 9 = 15 — yaani subset \{2, 4, 9\}.
+
+</Hi>
+
+<JavaCode file="ch05/MeetInTheMiddle.java" region="sums" />
+<JavaCode file="ch05/MeetInTheMiddle.java" region="mitm" />
+
+<MitmViz client:visible />
+
+<Callout type="java">
+
+<En>
+
+Sorting each half adds a log factor: O(2^(n/2) · n). The book removes it by building the sums already sorted, merge-style, but the version above is plenty fast for n ≤ 40. For CSES *Meet in the Middle*, count pairs with a sorted array and two pointers rather than a `HashMap`, because boxing 2²⁰ values is slow in Java.
+
+</En>
+<Hi>
+
+Har half ko sort karne se ek log factor judta hai: O(2^(n/2) · n). Book sums ko pehle se sorted (merge jaisa) banakar ise hata deta hai, par upar wala version n ≤ 40 ke liye kaafi fast hai. CSES *Meet in the Middle* mein pairs `HashMap` ki jagah sorted array + two pointers se gino — Java mein 2²⁰ values ko box karna slow hai.
+
+</Hi>
+
+</Callout>
+
+</Section>

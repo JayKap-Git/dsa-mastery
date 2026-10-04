@@ -18,10 +18,12 @@ export interface GridViewProps {
   title?: Bi | string;
   cell?: number;
   corner?: string;
+  /** Bigger cell text (board pieces like ♛). */
+  large?: boolean;
 }
 
 /** A 2D table (DP tables, 2D prefix sums, sparse tables) with optional outlined regions. */
-export function GridView({ rows, rowLabels, colLabels, roles = {}, regions = [], title, cell = 42, corner = '' }: GridViewProps) {
+export function GridView({ rows, rowLabels, colLabels, roles = {}, regions = [], title, cell = 42, corner = '', large }: GridViewProps) {
   const nCols = Math.max(...rows.map((r) => r.length), colLabels?.length ?? 0);
   const hasRowLab = !!rowLabels;
   const hasColLab = !!colLabels;
@@ -33,7 +35,7 @@ export function GridView({ rows, rowLabels, colLabels, roles = {}, regions = [],
     <div className="grid-view">
       {title && <div className="arr-title"><T v={title} ui /></div>}
       <div className="arr-scroll" ref={scroller}>
-        <div className="gv" style={{ width: lab + nCols * cell, height: head + rows.length * cell }}>
+        <div className={large ? 'gv gv-large' : 'gv'} style={{ width: lab + nCols * cell, height: head + rows.length * cell }}>
           {hasColLab && hasRowLab && <span className="gv-corner" style={{ width: lab, height: head }}>{corner}</span>}
           {colLabels?.map((c, j) => (
             <span key={`c${j}`} className="gv-head" style={{ left: lab + j * cell, top: 0, width: cell, height: head }}>{c}</span>
