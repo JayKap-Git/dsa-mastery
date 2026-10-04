@@ -713,3 +713,7 @@ html:not([data-auth='in']) [data-when-signed-in] { display: none !important; }
 .ms-best { stroke: var(--ok); stroke-width: 2; stroke-dasharray: 5 4; }
 .ms-dot { fill: var(--active-bg); stroke: var(--active-bd); stroke-width: 2; }
 .ms-point { fill: var(--text-2); }
+.tiling-svg { display: block; }
+.tile { stroke-width: 2; }
+.tile.h { fill: var(--range-bg); stroke: var(--range-bd); }
+.tile.v { fill: var(--plus-bg); stroke: var(--plus-bd); }

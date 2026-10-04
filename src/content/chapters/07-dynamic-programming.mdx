@@ -1,0 +1,300 @@
+---
+num: 7
+minutes: 110
+prerequisites: [5, 6]
+learn:
+  - en: The DP recipe — define a subproblem, write its recurrence, then compute it once per state (memoised or bottom-up).
+    hi: DP ka recipe — subproblem define karo, uski recurrence likho, phir har state ek hi baar nikaalo (memoised ya bottom-up).
+  - en: Optimise, count, and reconstruct — the coin problem in all three flavours.
+    hi: Optimise karna, ginna, aur solution banana — coin problem teeno tarah.
+  - en: The classics — longest increasing subsequence, grid paths, knapsack, edit distance and counting tilings.
+    hi: Classics — longest increasing subsequence, grid paths, knapsack, edit distance aur tilings ginna.
+---
+import CoinDPViz from '../../viz/algos/ch07/CoinDPViz';
+import LISViz from '../../viz/algos/ch07/LISViz';
+import GridDPViz from '../../viz/algos/ch07/GridDPViz';
+import KnapsackViz from '../../viz/algos/ch07/KnapsackViz';
+import EditDistanceViz from '../../viz/algos/ch07/EditDistanceViz';
+import TilingViz from '../../viz/algos/ch07/TilingViz';
+
+<En>
+
+**Dynamic programming** (DP) combines the correctness of complete search with the speed of greedy. It works when a problem breaks into **overlapping subproblems**: smaller versions of itself that come up again and again. Solve each subproblem **once**, store the answer, and reuse it. DP is used to **find an optimum** (the smallest or largest value) or to **count solutions**. Learning to spot the right subproblem is a milestone for every competitive programmer, and this chapter's classic problems are the best training.
+
+</En>
+<Hi>
+
+**Dynamic programming** (DP) complete search ki sahi-pan aur greedy ki speed dono deta hai. Yeh tab chalta hai jab problem **overlapping subproblems** mein toot jaaye — usi problem ke chhote roop jo baar-baar aate hain. Har subproblem **ek baar** solve karo, answer store karo, aur reuse karo. DP ya toh **optimum** (sabse chhota/bada) nikaalta hai, ya **solutions ginta** hai. Sahi subproblem pehchaanna har competitive programmer ke liye ek milestone hai — aur is chapter ke classic problems sabse achhi training hain.
+
+</Hi>
+
+<Section id="7.1" title="Coin problem">
+
+### The recursive formulation
+
+<En>
+
+Back to the coin problem from chapter 6, now for **any** coin set. Let solve(x) be the fewest coins that make the sum x. The key idea is to focus on the **first** coin c. After it, what remains is the same problem for x − c:
+
+</En>
+<Hi>
+
+Chapter 6 wala coin problem — ab **kisi bhi** coin set ke liye. solve(x) = sum x banane ke liye kam se kam coins. Asli idea: **pehle** coin c pe dhyaan do — uske baad bacha hua kaam wahi problem hai, bas x − c ke liye:
+
+</Hi>
+
+$$
+\text{solve}(x) = \begin{cases} \infty & x < 0 \\ 0 & x = 0 \\ \min_{c \in \text{coins}} \text{solve}(x - c) + 1 & x > 0 \end{cases}
+$$
+
+<En>
+
+For coins `{1, 3, 4}`: solve(10) = solve(7) + 1 = solve(4) + 2 = solve(0) + 3 = **3**, using 3 + 3 + 4. Coding this recursion directly is correct but **exponential**, because the same solve(x) gets recomputed many times.
+
+</En>
+<Hi>
+
+Coins `{1, 3, 4}` ke liye: solve(10) = solve(7) + 1 = solve(4) + 2 = solve(0) + 3 = **3** (3 + 3 + 4). Is recursion ko seedha likhna sahi hai par **exponential** — wahi solve(x) baar-baar calculate hota hai.
+
+</Hi>
+
+<JavaCode file="ch07/CoinDP.java" region="recursive" />
+
+### Memoization, then iteration
+
+<En>
+
+**Memoization** stores each solve(x) the first time it is computed (`ready[x]`, `value[x]`) and returns the stored value afterwards. Now each x is computed once, so the time is **O(n·k)** for n the sum and k the number of coins. Most contestants then write the same thing **bottom-up**: fill `value[0..n]` in increasing order, so every value[x − c] is already known. It's shorter, has no recursion depth limit, and has smaller constants.
+
+</En>
+<Hi>
+
+**Memoization** har solve(x) ko pehli baar calculate hote hi store kar leta hai (`ready[x]`, `value[x]`) aur baad mein seedha woh value lauta deta hai. Ab har x ek hi baar calculate hota hai — time **O(n·k)** (n = sum, k = coins). Zyaadatar contestants yahi cheez **bottom-up** likhte hain: `value[0..n]` badhte order mein bharo, taaki har value[x − c] pehle se pata ho. Chhota code, recursion depth ka jhanjhat nahi, chhote constants.
+
+</Hi>
+
+<JavaCode file="ch07/CoinDP.java" region="memo" />
+<JavaCode file="ch07/CoinDP.java" region="iterative" />
+
+<CoinDPViz client:visible />
+
+### Constructing a solution, and counting
+
+<En>
+
+- **Reconstruct:** also remember `first[x]`, the coin that achieved the optimum. Then walk n → n − first[n] → … to list the coins.
+- **Count:** to count the ways (ordered), replace `min` with a **sum**: count[x] = Σ count[x − c], with count[0] = 1. For `{1, 3, 4}` there are 6 ways to make 5. The counts explode, so problems ask for them modulo 10⁹ + 7.
+
+</En>
+<Hi>
+
+- **Solution banana:** saath mein `first[x]` yaad rakho — woh coin jisne optimum diya. Phir n → n − first[n] → … chalke coins likh do.
+- **Ginna:** tareeke ginne ho (ordered) toh `min` ki jagah **sum**: count[x] = Σ count[x − c], count[0] = 1. `{1, 3, 4}` se 5 banane ke 6 tareeke. Counts bahut bade ho jaate hain, isliye problems modulo 10⁹ + 7 maangti hain.
+
+</Hi>
+
+<JavaCode file="ch07/CoinDP.java" region="construct" />
+<JavaCode file="ch07/CoinDP.java" region="count" />
+
+<Callout type="pitfall">
+
+<En>
+
+Loop order decides what you count. With the sum x outside and the coins inside, 1 + 3 and 3 + 1 are counted separately: ordered sequences (CSES *Coin Combinations I*). With the coins outside and x inside, each multiset is counted once (*Coin Combinations II*). Same code shape, different meaning.
+
+</En>
+<Hi>
+
+Loop ka order decide karta hai ki tum kya gin rahe ho. Bahar sum x aur andar coins: 1 + 3 aur 3 + 1 alag gine jaate hain — ordered sequences (CSES *Coin Combinations I*). Bahar coins aur andar x: har multiset ek baar (*Coin Combinations II*). Code ka shape same, matlab alag.
+
+</Hi>
+
+</Callout>
+
+</Section>
+
+<Section id="7.2" title="Longest increasing subsequence">
+
+<En>
+
+**Problem:** the longest subsequence (not necessarily contiguous) whose values strictly increase from left to right. In `[6, 2, 5, 1, 7, 4, 8, 3]` it has length 4, for example 2, 5, 7, 8.
+
+**Subproblem:** length(k) = the longest increasing subsequence that **ends at position k**. It is 1 plus the best length(i) over earlier positions i with a[i] < a[k], or just 1 if there is none. The answer is the maximum over all k, in O(n²).
+
+</En>
+<Hi>
+
+**Problem:** sabse lamba subsequence (lagaatar hona zaroori nahi) jiski values left se right strictly badhti hon. `[6, 2, 5, 1, 7, 4, 8, 3]` mein length 4 — jaise 2, 5, 7, 8.
+
+**Subproblem:** length(k) = **position k pe khatam** hone wala sabse lamba increasing subsequence. Yeh 1 + un pichhli positions i ka best length(i) hai jahan a[i] < a[k] — aur aisa koi na ho toh bas 1. Answer = saare k ka maximum, O(n²) mein.
+
+</Hi>
+
+<JavaCode file="ch07/LIS.java" region="quadratic" />
+
+<LISViz client:visible />
+
+<Callout type="insight">
+
+<En>
+
+The book leaves an O(n log n) version as a puzzle. Keep `tails[L]`, the smallest possible last value of an increasing subsequence of length L + 1. This array is always sorted, so each new element either extends the longest one or replaces the first tail ≥ it, found by binary search (chapter 3). It's tested against the O(n²) version in `LIS.java`.
+
+</En>
+<Hi>
+
+Book O(n log n) version ek puzzle ki tarah chhod deti hai: `tails[L]` rakho — length L + 1 ke increasing subsequence ki sabse chhoti possible aakhri value. Yeh array hamesha sorted rehta hai, toh har naya element ya toh sabse lambe ko aage badhata hai, ya pehli ≥ wali tail ko badalta hai — jo binary search (chapter 3) se milti hai. `LIS.java` mein O(n²) wale ke against tested hai.
+
+</Hi>
+
+</Callout>
+
+<JavaCode file="ch07/LIS.java" region="fast" />
+
+</Section>
+
+<Section id="7.3" title="Paths in a grid">
+
+<En>
+
+**Problem:** go from the upper-left to the lower-right corner of an n × n grid, moving only down or right, and maximise the sum of the squares you visit. A path into square (y, x) comes either from the left or from above, so
+
+sum(y, x) = max(sum(y, x − 1), sum(y − 1, x)) + value(y, x),
+
+with an extra row and column of zeros at index 0 so the edges need no special case. The book's grid gives **67**, in O(n²).
+
+</En>
+<Hi>
+
+**Problem:** n × n grid ke upper-left se lower-right corner tak jao, sirf neeche ya right chalke, aur raaste ke squares ka sum maximum karo. Square (y, x) tak path ya left se aata hai ya upar se, toh
+
+sum(y, x) = max(sum(y, x − 1), sum(y − 1, x)) + value(y, x),
+
+index 0 pe zeros ki ek extra row/column ke saath taaki edges pe koi special case na ho. Book ka grid **67** deta hai, O(n²) mein.
+
+</Hi>
+
+<JavaCode file="ch07/GridPathSum.java" region="maxsum" />
+
+<GridDPViz client:visible />
+
+</Section>
+
+<Section id="7.4" title="Knapsack problems">
+
+<En>
+
+**Knapsack** problems pick a subset of objects with some property. **Problem:** given weights, which sums can a subset make? For `[1, 3, 3, 5]`, every sum from 0 to 12 is possible except 2 and 10.
+
+**Subproblem:** possible(x, k) asks whether the first k weights can make x. Either weight k is used, which leaves x − w_k for the first k − 1 weights, or it isn't, which leaves x for the first k − 1. That's O(nW) for W the total weight.
+
+A **one-dimensional** array is enough. For each weight, update the sums from **right to left**, so a sum created in this round isn't extended again by the same weight.
+
+</En>
+<Hi>
+
+**Knapsack** problems objects ka koi subset chunte hain jisme koi property ho. **Problem:** weights diye hain — subset se kaunse sums ban sakte hain? `[1, 3, 3, 5]` se 0 se 12 tak har sum, sirf 2 aur 10 ko chhodkar.
+
+**Subproblem:** possible(x, k) — kya pehle k weights se x ban sakta hai? Ya toh weight k use hua (bacha x − w_k pehle k − 1 se), ya nahi hua (bacha x pehle k − 1 se). O(nW), jahan W = total weight.
+
+Ek **one-dimensional** array kaafi hai: har weight ke liye sums **right se left** update karo, taaki isi round mein bana sum usi weight se dobara na badhe.
+
+</Hi>
+
+<JavaCode file="ch07/Knapsack.java" region="table" />
+
+<KnapsackViz client:visible />
+
+<JavaCode file="ch07/Knapsack.java" region="oned" />
+
+<Callout type="java">
+
+<En>
+
+The same right-to-left trick solves the **0/1 knapsack** with values, which the book mentions in passing: for each capacity c from high to low, best[c] = max(best[c], best[c − wᵢ] + vᵢ). It's in `Knapsack.java` and checked against all subsets, ready for CSES *Book Shop*. Use `int[]`/`long[]` rather than `List<Integer>`, since a capacity of 10⁵ means 10⁵ updates per item.
+
+</En>
+<Hi>
+
+Yahi right-to-left trick values wala **0/1 knapsack** bhi solve karti hai (book isse sirf chhoo ke nikalti hai): har capacity c ke liye bade se chhote tak, best[c] = max(best[c], best[c − wᵢ] + vᵢ). `Knapsack.java` mein hai aur saare subsets ke against checked — CSES *Book Shop* ke liye ready. `List<Integer>` nahi, `int[]`/`long[]` use karo: capacity 10⁵ matlab har item pe 10⁵ updates.
+
+</Hi>
+
+</Callout>
+
+<JavaCode file="ch07/Knapsack.java" region="values" />
+
+</Section>
+
+<Section id="7.5" title="Edit distance">
+
+<En>
+
+The **edit distance** (Levenshtein distance) is the fewest **inserts, removes and modifications** that turn one string into another. LOVE → MOVIE takes 2: modify L→M, then insert I.
+
+**Subproblem:** distance(a, b) between the prefixes x[0..a] and y[0..b]. The last step was one of three things:
+
+- **insert** a character: distance(a, b − 1) + 1;
+- **remove** a character: distance(a − 1, b) + 1;
+- **match or modify** the last characters: distance(a − 1, b − 1) + (0 if they're equal, else 1).
+
+Take the minimum. The table is O(nm), and walking back from the corner reads off the actual operations.
+
+</En>
+<Hi>
+
+**Edit distance** (Levenshtein distance) = ek string ko doosri mein badalne ke liye kam se kam **inserts, removes aur modifications**. LOVE → MOVIE mein 2 lagte hain: L→M modify, phir I insert.
+
+**Subproblem:** prefixes x[0..a] aur y[0..b] ke beech distance(a, b). Aakhri step teen mein se ek tha:
+
+- character **insert**: distance(a, b − 1) + 1;
+- character **remove**: distance(a − 1, b) + 1;
+- aakhri characters **match ya modify**: distance(a − 1, b − 1) + (barabar hon toh 0, warna 1).
+
+Minimum lo. Table O(nm) ki hai, aur corner se peeche chalne pe asli operations padh lo.
+
+</Hi>
+
+<JavaCode file="ch07/EditDistance.java" region="distance" />
+
+<EditDistanceViz client:visible />
+
+</Section>
+
+<Section id="7.6" title="Counting tilings">
+
+<En>
+
+Sometimes a DP state is more than a number or two. **Problem:** in how many ways can 1 × 2 dominoes tile an n × m grid? A 4 × 7 grid has 781 ways. Go **row by row**. What a row needs to know about the previous one is just **which columns are already covered** by a vertical domino sticking down from above, and that's a bitmask of m bits.
+
+So count[row][mask] counts the partial tilings where the boundary has that mask. For each mask, fill the row: covered cells are skipped, and every other cell starts either a horizontal domino or a vertical one that sticks into the next row. The result is O(n · 4^m) at worst, so **rotate the grid so that m is the shorter side**.
+
+</En>
+<Hi>
+
+Kabhi-kabhi DP state ek-do numbers se zyada hoti hai. **Problem:** 1 × 2 dominoes se n × m grid kitne tareeke se dhak sakte hain? 4 × 7 grid ke 781 tareeke. **Row by row** chalo. Ek row ko pichhli row ke baare mein bas itna jaanna hai ki **kaunse columns upar se aate vertical domino se pehle hi dhake hain** — yaani m bits ka ek bitmask.
+
+Toh count[row][mask] un partial tilings ko ginta hai jinki boundary pe yeh mask hai. Har mask ke liye row bharo: dhake cells skip, aur baaki har cell pe ya toh horizontal domino shuru hota hai ya vertical, jo agli row mein ghus jaata hai. Worst case O(n · 4^m) — isliye **grid ghumao taaki m chhoti side ho**.
+
+</Hi>
+
+<JavaCode file="ch07/Tilings.java" region="dp" />
+
+<TilingViz client:visible />
+
+<Callout type="book">
+
+<En>
+
+There's even a closed formula with cosines (Kasteleyn, Temperley and Fisher, 1961) that runs in O(nm). It multiplies real numbers, though, so precision becomes the problem. In contests, the bitmask DP is the dependable choice.
+
+</En>
+<Hi>
+
+Cosines wala ek closed formula bhi hai (Kasteleyn, Temperley aur Fisher, 1961) jo O(nm) mein chalta hai — par real numbers multiply karta hai, toh precision dikkat ban jaati hai. Contest mein bitmask DP hi bharosemand raasta hai.
+
+</Hi>
+
+</Callout>
+
+</Section>

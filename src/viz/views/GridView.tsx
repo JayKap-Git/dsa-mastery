@@ -27,7 +27,7 @@ export function GridView({ rows, rowLabels, colLabels, roles = {}, regions = [],
   const nCols = Math.max(...rows.map((r) => r.length), colLabels?.length ?? 0);
   const hasRowLab = !!rowLabels;
   const hasColLab = !!colLabels;
-  const lab = hasRowLab ? 40 : 0;
+  const lab = hasRowLab ? Math.max(40, 12 + 9 * Math.max(...rowLabels!.map((r) => String(r).length))) : 0;
   const head = hasColLab ? 24 : 0;
   const scroller = useKeepInView<HTMLDivElement>([rows, roles, regions]);
 
