@@ -1,0 +1,257 @@
+---
+num: 8
+minutes: 55
+prerequisites: [3, 4]
+learn:
+  - en: Amortized analysis — bound the total work of all steps, not the worst single step.
+    hi: Amortized analysis — har step ka worst case nahi, saare steps ka total kaam bound karo.
+  - en: Two pointers — subarray sums, 2SUM and 3SUM in linear time after sorting.
+    hi: Two pointers — subarray sums, 2SUM aur 3SUM, sort ke baad linear time mein.
+  - en: Monotonic stacks and deques — nearest smaller elements and sliding window minimum in O(n).
+    hi: Monotonic stack aur deque — nearest smaller elements aur sliding window minimum O(n) mein.
+---
+import SubarraySumViz from '../../viz/algos/ch08/SubarraySumViz';
+import TwoSumViz from '../../viz/algos/ch08/TwoSumViz';
+import NearestSmallerViz from '../../viz/algos/ch08/NearestSmallerViz';
+import SlidingWindowViz from '../../viz/algos/ch08/SlidingWindowViz';
+
+<En>
+
+Usually you can read the time complexity straight off the loops. But some algorithms have a step whose cost **varies**: cheap most of the time, expensive now and then. Multiplying the worst single step by n then gives a bound that is far too pessimistic. **Amortized analysis** instead bounds the **total** work of all the steps together. Every algorithm in this chapter has a loop inside a loop and still runs in O(n), because something can only happen n times in total.
+
+</En>
+<Hi>
+
+Aam taur pe time complexity loops dekh ke hi pata chal jaati hai. Par kuch algorithms mein ek step ki cost **badalti** rehti hai — zyaadatar sasta, kabhi-kabhi mehenga. Tab sabse mehenge step × n wala bound bahut zyada pessimistic hota hai. **Amortized analysis** iski jagah saare steps ke **total** kaam ko bound karta hai. Is chapter ke har algorithm mein loop ke andar loop hai, phir bhi O(n) — kyunki koi cheez total mein sirf n baar ho sakti hai.
+
+</Hi>
+
+<Section id="8.1" title="Two pointers method">
+
+<En>
+
+In the **two pointers method**, two positions walk through the array, and each one only ever moves in **one direction**. Since each pointer moves at most n times, the whole walk is O(n), however the moves are spread out.
+
+**Subarray sum:** given n **positive** numbers and a target x, find a subarray (a contiguous part) with sum x. Keep a window from L to R:
+
+1. On each turn, R moves right as long as the sum stays ≤ x.
+2. If the sum is exactly x, you've found it.
+3. Otherwise L moves one step right, and its value leaves the window.
+
+For `[1, 3, 2, 5, 1, 1, 2, 3]` and x = 8, the window grows to 1 + 3 + 2 = 6 and gets stuck (adding 5 would overshoot), so L drops 1 and then 3. Then R takes 5 and 1, giving 2 + 5 + 1 = **8**. On a single turn R might move many steps, but over the whole run it moves at most n steps in total.
+
+</En>
+<Hi>
+
+**Two pointers method** mein do positions array pe chalti hain, aur dono sirf **ek hi direction** mein. Har pointer max n baar hilta hai, isliye poora walk O(n) — chahe moves kaise bhi bant-te hon.
+
+**Subarray sum:** n **positive** numbers aur target x diye hain — sum x wala subarray (lagaatar hissa) dhundho. L se R tak ek window rakho:
+
+1. Har turn mein R tab tak right jaata hai jab tak sum ≤ x rahe.
+2. Sum theek x hai toh mil gaya.
+3. Warna L ek step right, aur uski value window se bahar.
+
+`[1, 3, 2, 5, 1, 1, 2, 3]` aur x = 8 pe window 1 + 3 + 2 = 6 tak badhti hai aur atak jaati hai (5 lene se zyada ho jaata), toh L pehle 1 aur phir 3 chhodta hai. Phir R 5 aur 1 leta hai: 2 + 5 + 1 = **8**. Ek turn mein R kai steps chal sakta hai, par poore run mein total max n steps.
+
+</Hi>
+
+<JavaCode file="ch08/TwoPointers.java" region="subarray" />
+
+<SubarraySumViz client:visible />
+
+<Callout type="pitfall">
+
+<En>
+
+This only works because the numbers are **positive**: growing the window always increases the sum and shrinking always decreases it. With zeros or negative numbers that's no longer true, and the method can miss answers. For those, use prefix sums with a `HashMap` counting earlier prefixes (CSES *Subarray Sums II*).
+
+</En>
+<Hi>
+
+Yeh sirf isliye chalta hai kyunki numbers **positive** hain: window badhao toh sum hamesha badhta hai, chhoti karo toh ghatta hai. Zero ya negative numbers ke saath yeh sach nahi rehta, aur method answers miss kar sakta hai. Unke liye prefix sums + pichhle prefixes ginne wala `HashMap` use karo (CSES *Subarray Sums II*).
+
+</Hi>
+
+</Callout>
+
+### 2SUM
+
+<En>
+
+**2SUM:** find two values in the array whose sum is x. First **sort**. Then L starts at the smallest value and R at the largest. On each turn, R moves left as long as a[L] + a[R] > x, and then L moves one step right.
+
+Why is it safe to throw values away? If a[L] + a[R] > x, then a[R] is too big even with the smallest remaining partner, so it can't be in any pair. If a[L] + a[R] < x, then a[L] is too small even with the largest remaining partner. For `[1, 4, 5, 6, 7, 9, 9, 10]` and x = 12: 1 + 10 = 11 is too small, so L moves; 4 + 10, 4 + 9 and 4 + 9 are too big, so R moves left three times; 4 + 7 = 11 is too small; and then **5 + 7 = 12**.
+
+That's O(n log n) for the sort plus O(n) for the walk. A binary search for x − a[i] for every i also gives O(n log n).
+
+</En>
+<Hi>
+
+**2SUM:** array mein do values dhundho jinka sum x ho. Pehle **sort** karo. Phir L sabse chhoti value pe aur R sabse badi pe. Har turn mein R tab tak left jaata hai jab tak a[L] + a[R] > x, phir L ek step right.
+
+Values phenkna safe kyun hai? Agar a[L] + a[R] > x, toh a[R] bache hue sabse chhote partner ke saath bhi bada hai — kisi pair mein nahi ho sakta. Agar a[L] + a[R] < x, toh a[L] bache hue sabse bade partner ke saath bhi chhota hai. `[1, 4, 5, 6, 7, 9, 9, 10]` aur x = 12 pe: 1 + 10 = 11 chhota, toh L hila; 4 + 10, 4 + 9 aur 4 + 9 bade, toh R teen baar left; 4 + 7 = 11 chhota; aur phir **5 + 7 = 12**.
+
+Sort ka O(n log n) plus walk ka O(n). Har i ke liye x − a[i] ki binary search bhi O(n log n) deti hai.
+
+</Hi>
+
+<JavaCode file="ch08/TwoPointers.java" region="twoSum" />
+
+<TwoSumViz client:visible />
+
+<Callout type="insight">
+
+<En>
+
+The book asks how to solve **3SUM** (three values with sum x) in O(n²). Fix the first value a[i], then run 2SUM for x − a[i] on the part to its right: n walks of O(n) each. For a long time O(n²) was believed to be optimal, but in 2014 slightly faster algorithms were found.
+
+</En>
+<Hi>
+
+Book poochhti hai: **3SUM** (teen values jinka sum x) O(n²) mein kaise? Pehli value a[i] fix karo, phir uske right wale hisse pe x − a[i] ke liye 2SUM chalao — n walks, har ek O(n). Kaafi samay tak O(n²) ko hi best maana jaata tha, par 2014 mein thode tez algorithms mil gaye.
+
+</Hi>
+
+</Callout>
+
+<JavaCode file="ch08/TwoPointers.java" region="threeSum" />
+
+<Callout type="java">
+
+<En>
+
+CSES *Sum of Two Values* wants the **original** positions, which sorting destroys. Sort the positions by value instead, for example an `int[][]` of `{value, index}` pairs with `Arrays.sort(p, (u, v) -> Integer.compare(u[0], v[0]))`. Sorting objects uses a merge sort, so it can't be slowed down by adversarial input the way `Arrays.sort(int[])` (a quicksort) can.
+
+</En>
+<Hi>
+
+CSES *Sum of Two Values* **original** positions maangta hai, jo sort karne se kho jaati hain. Iski jagah positions ko value se sort karo — jaise `{value, index}` pairs ka `int[][]`, `Arrays.sort(p, (u, v) -> Integer.compare(u[0], v[0]))` ke saath. Objects ka sort merge sort hai, toh adversarial input usse slow nahi kar sakta, jaise `Arrays.sort(int[])` (quicksort) ho sakta hai.
+
+</Hi>
+
+</Callout>
+
+</Section>
+
+<Section id="8.2" title="Nearest smaller elements">
+
+<En>
+
+**Problem:** for every element, find the **nearest smaller element** before it: the first smaller value you meet walking left. It may not exist.
+
+Go left to right with a **stack** of positions whose values increase from bottom to top. For each element:
+
+1. **Pop** while the top is ≥ the current element.
+2. Now the top, if any, is the answer.
+3. **Push** the current element.
+
+Why can popped elements be forgotten? Once a smaller (or equal) element appears closer, an older larger element can never be the nearest smaller element for anything that comes later.
+
+For `[1, 3, 4, 2, 5, 3, 4, 2]` the answers are –, 1, 3, 1, 2, 2, 3, 1. When the 2 arrives, it pops 4 and 3 at once, and at the end the stack holds just 1 and 2.
+
+**The amortized argument:** one element can pop many others, but every element is **pushed once and popped at most once**. That's at most 2n stack operations in total, so O(n).
+
+</En>
+<Hi>
+
+**Problem:** har element ke liye uske pehle ka **nearest smaller element** dhundho — left chalte hue milne wali pehli chhoti value. Ho sakta hai na ho.
+
+Left se right chalo, ek **stack** ke saath jismein positions hain aur unki values neeche se upar badhti hain. Har element pe:
+
+1. Jab tak top ≥ current element, **pop** karo.
+2. Ab top (agar hai) hi answer hai.
+3. Current element **push** karo.
+
+Pop hue elements bhool kyun sakte hain? Jaise hi koi chhota (ya barabar) element zyada paas aa gaya, purana bada element aage aane wale kisi ka bhi nearest smaller kabhi nahi ban sakta.
+
+`[1, 3, 4, 2, 5, 3, 4, 2]` ke answers: –, 1, 3, 1, 2, 2, 3, 1. 2 aate hi 4 aur 3 ek saath pop hote hain, aur end mein stack mein sirf 1 aur 2 bachte hain.
+
+**Amortized argument:** ek element kai doosron ko pop kar sakta hai, par har element **ek baar push aur max ek baar pop** hota hai. Total max 2n stack operations — yaani O(n).
+
+</Hi>
+
+<JavaCode file="ch08/NearestSmaller.java" region="stack" />
+
+<NearestSmallerViz client:visible />
+
+<Callout type="java">
+
+<En>
+
+Skip `java.util.Stack`: it's a synchronized legacy class built on `Vector`. `ArrayDeque<Integer>` with `push`/`pop`/`peek` is the modern choice, and a plain `int[]` with a `top` counter (as above) avoids boxing altogether, which matters at n = 2·10⁵.
+
+</En>
+<Hi>
+
+`java.util.Stack` mat lo — yeh `Vector` pe bani synchronized legacy class hai. `ArrayDeque<Integer>` (`push`/`pop`/`peek`) modern choice hai, aur ek simple `int[]` + `top` counter (jaise upar) boxing poori tarah hata deta hai — n = 2·10⁵ pe yeh fark padta hai.
+
+</Hi>
+
+</Callout>
+
+<Callout type="insight">
+
+<En>
+
+The same **monotonic stack** finds the nearest smaller element to the right (walk from the right) and the nearest **greater** element (flip the comparison). With both neighbours known, each bar of a histogram knows how far it can stretch, which solves the largest rectangle problem (CSES *Advertisement*) in O(n).
+
+</En>
+<Hi>
+
+Yahi **monotonic stack** right side ka nearest smaller (right se chalo) aur nearest **greater** element (comparison ulta karo) bhi dhundhta hai. Dono padosi pata hon toh histogram ka har bar jaanta hai ki woh kitna phail sakta hai — isse largest rectangle problem (CSES *Advertisement*) O(n) mein solve hota hai.
+
+</Hi>
+
+</Callout>
+
+</Section>
+
+<Section id="8.3" title="Sliding window minimum">
+
+<En>
+
+A **sliding window** is a fixed-size subarray of k elements that moves one step right at a time. **Problem:** report the minimum of every window.
+
+Keep a **deque** (a queue you can also pop from the back) of positions whose values **increase from front to back**. Then the front is always the minimum of the current window. When a new element arrives:
+
+1. **Pop from the back** every element ≥ the new one. The new element is smaller and stays in the window longer, so they can never be the minimum again.
+2. **Pop from the front** if that position has slid out of the window.
+3. **Push** the new element at the back. Once the first window is full, report the front.
+
+For `[2, 1, 4, 5, 3, 4, 1, 2]` and k = 4, the minimums are 1, 1, 3, 1, 1. Each element enters the deque once and leaves at most once, so this is O(n), whatever k is.
+
+</En>
+<Hi>
+
+**Sliding window** k elements ka fixed-size subarray hai jo ek-ek step right khiskta hai. **Problem:** har window ka minimum batao.
+
+Ek **deque** (aisi queue jisme back se bhi pop kar sako) rakho, jisme positions hon aur unki values **front se back tak badhti hon**. Tab front hamesha current window ka minimum hai. Naya element aaye toh:
+
+1. **Back se pop** karo har woh element jo naye se ≥ hai. Naya element chhota hai aur window mein zyada der rahega, toh woh kabhi minimum nahi banenge.
+2. **Front se pop** karo agar woh position window se bahar khisak gayi.
+3. Naya element **back pe push** karo. Pehli window poori hote hi front report karo.
+
+`[2, 1, 4, 5, 3, 4, 1, 2]` aur k = 4 ke minimums: 1, 1, 3, 1, 1. Har element deque mein ek baar aata hai aur max ek baar jaata hai — O(n), k kuch bhi ho.
+
+</Hi>
+
+<JavaCode file="ch08/SlidingWindowMin.java" region="deque" />
+
+<SlidingWindowViz client:visible />
+
+<Callout type="java">
+
+<En>
+
+`ArrayDeque<Integer>` works: `peekLast`/`pollLast` at the back, `peekFirst`/`pollFirst` at the front. The `int[]` with `head` and `tail` above does the same without boxing; it never wraps around because each position is pushed only once. For the maximum, flip `>=` to `<=`.
+
+</En>
+<Hi>
+
+`ArrayDeque<Integer>` chalega: back pe `peekLast`/`pollLast`, front pe `peekFirst`/`pollFirst`. Upar wala `int[]` + `head`/`tail` wahi kaam boxing ke bina karta hai — aur kabhi wrap nahi hota kyunki har position ek hi baar push hoti hai. Maximum ke liye `>=` ko `<=` kar do.
+
+</Hi>
+
+</Callout>
+
+</Section>

@@ -355,6 +355,9 @@ pre.code span[style], .astro-code span[style] { color: var(--shiki-light); }
 .stage { padding: 1rem 1.1rem 0.6rem; min-height: 120px; }
 .stack { display: grid; gap: 1rem; }
 .stack.row-wrap { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: flex-start; }
+/* Grid/flex items default to min-width: auto (their content width), which would push wide arrays past
+   the clipped .viz edge instead of letting their own .arr-scroll scroll. */
+.stack > * { min-width: 0; max-width: 100%; }
 .narration { display: flex; gap: 0.8rem; align-items: flex-start; margin: 0 1.1rem; padding: 0.75rem 0.95rem; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); min-height: 3.4rem; }
 .narration p { margin: 0; font-size: 0.95rem; line-height: 1.55; }
 .step-no { font: 600 0.74rem/1.9 var(--font-mono); color: var(--muted); white-space: nowrap; }
