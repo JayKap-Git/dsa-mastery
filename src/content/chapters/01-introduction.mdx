@@ -1,0 +1,333 @@
+---
+num: 1
+minutes: 35
+prerequisites: []
+learn:
+  - en: A Java contest template with fast input and output, and why Scanner and System.out are too slow.
+    hi: Fast input/output wala Java contest template — aur Scanner aur System.out kyun slow hain.
+  - en: The number traps that cost contest points in Java — int overflow, negative remainders, floating-point comparison and locale formatting.
+    hi: Java mein number wale traps jo contest mein marks kaat lete hain — int overflow, negative remainder, floating-point comparison aur locale formatting.
+  - en: The maths the rest of the book relies on — sum formulas, progressions, logarithms, floor and ceiling.
+    hi: Aage ki book jis maths pe tiki hai — sum formulas, progressions, logarithms, floor aur ceiling.
+---
+import OverflowLab from '../../viz/algos/ch01/OverflowLab';
+
+<En>
+
+Competitive programming has two halves: **designing** an algorithm that is correct and fast enough, and **implementing** it without bugs, quickly. This quick-revision chapter sets up the implementation side for Java: a template you'll reuse for every problem, the number pitfalls that silently produce wrong answers, and the small amount of maths the book assumes.
+
+</En>
+<Hi>
+
+Competitive programming ke do hisse hain: aisa algorithm **design** karna jo sahi bhi ho aur fast bhi, aur use bina bugs ke, jaldi **implement** karna. Yeh quick-revision chapter Java ke liye implementation wala hissa set karta hai: ek template jo har problem mein kaam aayega, number wale traps jo chupchaap galat answer de dete hain, aur woh thodi si maths jo book maan ke chalti hai.
+
+</Hi>
+
+<Section id="1.1" title="Programming languages">
+
+<En>
+
+The book's examples are C++. Everything on this site is translated to **Java**, which is a perfectly good contest language:
+
+- The JIT compiler makes it fast — usually within a small factor of C++ for the same algorithm.
+- The library has what you need — `ArrayList`, `TreeMap`, `PriorityQueue`, `BigInteger`, sorting and binary search.
+- There's no undefined behaviour — out-of-bounds reads throw an exception instead of silently returning garbage.
+
+Its weak spots are predictable, and this chapter fixes most of them: slow default I/O, the cost of boxing (`List<Integer>` stores objects, not ints), and a small default recursion depth.
+
+Start every solution from this template. `solve` is the only part you change.
+
+</En>
+<Hi>
+
+Book ke examples C++ mein hain. Is site pe sab kuch **Java** mein translate kiya gaya hai — aur Java contest ke liye bilkul theek language hai:
+
+- JIT compiler ise fast banata hai — same algorithm C++ se zyada slow nahi hota.
+- Library mein zaroorat ki har cheez hai — `ArrayList`, `TreeMap`, `PriorityQueue`, `BigInteger`, sorting aur binary search.
+- Koi undefined behaviour nahi — array ke bahar padhoge toh exception aayega, chupchaap garbage value nahi.
+
+Kamzoriyan pehle se pata hain, aur yeh chapter unme se zyaadatar theek kar deta hai: default I/O slow hai, boxing ka kharcha (`List<Integer>` objects rakhta hai, ints nahi), aur default recursion depth chhoti hai.
+
+Har solution isi template se shuru karo. Badalna sirf `solve` hai.
+
+</Hi>
+
+<JavaCode file="ch01/Template.java" region="template" title="Main.java — the contest template" />
+
+<Callout type="java">
+
+<En>
+
+**Deep recursion:** Java's default thread stack overflows at a few thousand nested calls (think DFS on a path of 10⁵ nodes). Run your solution in a thread with a big stack, e.g. `new Thread(null, () -> run(), "main", 1 << 27).start();`. Chapter 12 uses this for DFS.
+
+**Class name:** many judges require the public class to be called `Main`. Rename `Template` to `Main` before you submit.
+
+</En>
+<Hi>
+
+**Deep recursion:** Java ka default thread stack kuch hazaar nested calls pe overflow ho jaata hai (socho 10⁵ nodes ke path pe DFS). Solution ko bade stack wale thread mein chalao, jaise `new Thread(null, () -> run(), "main", 1 << 27).start();`. Chapter 12 mein DFS ke liye yahi use karenge.
+
+**Class name:** kai judges public class ka naam `Main` maangte hain. Submit karne se pehle `Template` ko `Main` kar do.
+
+</Hi>
+
+</Callout>
+
+</Section>
+
+<Section id="1.2" title="Input and output">
+
+<En>
+
+Input is usually numbers and strings separated by spaces and newlines, and the tokens are read the same way whichever separator is used. `Scanner` is convenient but slow: it parses with regular expressions, which can take seconds on 10⁶ numbers. The template's `FastReader` reads whole lines through a `BufferedReader` and splits them with a `StringTokenizer`.
+
+The same applies to output. `System.out.println` in a loop can flush every line. Collect output in a `PrintWriter` and `flush()` once at the end; if you forget the flush, nothing is printed at all.
+
+</En>
+<Hi>
+
+Input aam taur pe numbers aur strings hote hain jo spaces aur newlines se alag hote hain — separator koi bhi ho, tokens ek hi tarah padhe jaate hain. `Scanner` aasaan hai par slow: regular expressions se parse karta hai, aur 10⁶ numbers pe seconds laga sakta hai. Template ka `FastReader` `BufferedReader` se poori line padhta hai aur `StringTokenizer` se todta hai.
+
+Output ka bhi yahi haal hai: loop mein `System.out.println` har line pe flush kar sakta hai. Output `PrintWriter` mein jama karo aur end mein ek baar `flush()` karo — flush bhool gaye toh kuch print hi nahi hoga!
+
+</Hi>
+
+<JavaCode file="ch01/Template.java" region="reader" />
+
+<Callout type="pitfall">
+
+<En>
+
+`nextLine()` returns the **next whole line**, and anything left on the current line is discarded. To read a line that contains spaces after reading a number, call `nextLine()` once for the number's line (or read the number with `nextLine()` too). To read until the input ends, loop while `next()` is not `null`.
+
+</En>
+<Hi>
+
+`nextLine()` **agli poori line** deta hai — current line ka bacha hua hissa chhod deta hai. Number padhne ke baad spaces wali line chahiye, toh soch samajh ke `nextLine()` call karo. Input khatam hone tak padhna ho toh tab tak loop chalao jab tak `next()` `null` na de.
+
+</Hi>
+
+</Callout>
+
+</Section>
+
+<Section id="1.3" title="Working with numbers">
+
+### Integers and overflow
+
+<En>
+
+`int` holds about ±2.1·10⁹ and `long` about ±9.2·10¹⁸. The classic bug is in the book too: even when the variable is `long`, `a * a` with `int` operands is computed in `int`, overflows, and only then gets widened. Java doesn't warn you or throw an exception; it silently gives the same wrong number the book shows.
+
+</En>
+<Hi>
+
+`int` mein lagbhag ±2.1·10⁹ aata hai aur `long` mein ±9.2·10¹⁸. Book wala classic bug: variable `long` ho tab bhi, `int` operands ka `a * a` pehle `int` mein calculate hota hai, overflow hota hai, aur *phir* `long` banta hai. Java na warning deta hai na exception — chupchaap wahi galat number deta hai jo book dikhati hai.
+
+</Hi>
+
+<JavaCode file="ch01/Numbers.java" region="overflow" />
+
+<OverflowLab client:visible />
+
+<Callout type="java">
+
+<En>
+
+- **Fix:** widen *before* the operation: `(long) a * a`. A good habit is to use `long` for every sum and product unless memory is tight.
+- **Debugging:** `Math.multiplyExact`, `Math.addExact` and friends throw an exception on overflow, which helps find the bug.
+- **Bigger than `long`:** `BigInteger` has no limit, but it's slow, so use it only when you must.
+
+</En>
+<Hi>
+
+- **Fix:** operation se *pehle* widen karo: `(long) a * a`. Achhi aadat: har sum aur product `long` mein rakho, jab tak memory tight na ho.
+- **Debugging:** `Math.multiplyExact`, `Math.addExact` jaise methods overflow pe exception phenkte hain — bug pakadne mein madad karte hain.
+- **`long` se bhi bada:** `BigInteger` ki koi limit nahi, par slow hai — sirf zaroorat ho tabhi use karo.
+
+</Hi>
+
+</Callout>
+
+<JavaCode file="ch01/Numbers.java" region="exact" />
+<JavaCode file="ch01/Numbers.java" region="bigint" />
+
+### Modular arithmetic
+
+<En>
+
+When an answer is huge, problems ask for it modulo a number, usually 10⁹ + 7. You can take the remainder after every `+`, `−` and `×`, so the numbers stay small:
+
+</En>
+<Hi>
+
+Jab answer bahut bada ho, problem use kisi number ke modulo maangti hai — aksar 10⁹ + 7. Har `+`, `−` aur `×` ke baad remainder le sakte ho, toh numbers chhote hi rehte hain:
+
+</Hi>
+
+$$
+(a \pm b) \bmod m = \big((a \bmod m) \pm (b \bmod m)\big) \bmod m, \qquad (a \cdot b) \bmod m = \big((a \bmod m)(b \bmod m)\big) \bmod m
+$$
+
+<JavaCode file="ch01/Numbers.java" region="mod" />
+
+<Callout type="pitfall">
+
+<En>
+
+In Java, `-7 % 3` is `-1`: the result takes the sign of the left operand. After a subtraction, use `Math.floorMod(x, m)` (always `0..m−1`) or add `m` before taking `%`. Also note that the product of two values below 10⁹ + 7 fits in a `long` but not in an `int`.
+
+</En>
+<Hi>
+
+Java mein `-7 % 3` ka answer `-1` hai — result left wale number ka sign leta hai. Subtraction ke baad `Math.floorMod(x, m)` use karo (hamesha `0..m−1`), ya `%` se pehle `m` jod do. Aur yaad rakho: 10⁹ + 7 se chhoti do values ka product `long` mein fit hota hai, `int` mein nahi.
+
+</Hi>
+
+</Callout>
+
+### Floating point
+
+<En>
+
+Some decimals can't be stored exactly: `0.3 * 3 + 0.1` is `0.9999999999999999`, not `1.0`. Never compare doubles with `==`. Instead, treat them as equal when they differ by less than ε (e.g. 10⁻⁹). `double` represents integers exactly only up to 2⁵³.
+
+When printing, `String.format("%.9f", x)` uses your computer's locale. In some locales, such as German, that prints `0,333333333` with a comma, which a judge marks wrong. Pass `Locale.US`.
+
+</En>
+<Hi>
+
+Kuch decimals exactly store nahi hote: `0.3 * 3 + 0.1` ka answer `0.9999999999999999` hai, `1.0` nahi. Doubles ko kabhi `==` se compare mat karo — jab difference ε (jaise 10⁻⁹) se kam ho, tab barabar maano. `double` integers ko sirf 2⁵³ tak exactly rakhta hai.
+
+Print karte waqt `String.format("%.9f", x)` tumhare computer ka locale use karta hai — kuch locales (jaise German) mein `0,333333333` comma ke saath print hota hai, aur judge use galat maanta hai. `Locale.US` pass karo.
+
+</Hi>
+
+<JavaCode file="ch01/Numbers.java" region="double" />
+
+</Section>
+
+<Section id="1.4" title="Shortening code">
+
+<En>
+
+C++ contestants shorten code with `typedef` and `#define` macros. Java has neither, and that avoids the book's own macro bug: `#define SQ(a) a*a` turns `SQ(3+3)` into `3+3*3+3 = 15`. In Java you shorten code safely with:
+
+- **small static helper methods** (`static long sq(long a) { return a * a; }`). They are type-checked and evaluate their argument once.
+- **`var`** for long generic types: `var adj = new ArrayList<List<Integer>>();`
+- **static imports**: `import static java.lang.Math.*;` lets you write `max(a, b)`.
+- **one reusable template**, so the boilerplate is written once.
+
+Keep code readable: a contest program is short, but you still have to debug it under pressure.
+
+</En>
+<Hi>
+
+C++ wale `typedef` aur `#define` macros se code chhota karte hain. Java mein dono nahi hain — aur isse book wala macro bug bhi bach jaata hai: `#define SQ(a) a*a` mein `SQ(3+3)` ban jaata hai `3+3*3+3 = 15`. Java mein code safely chhota karne ke tareeke:
+
+- **chhote static helper methods** (`static long sq(long a) { return a * a; }`) — type-checked hain, aur argument ek hi baar evaluate hota hai.
+- **`var`** lambe generic types ke liye: `var adj = new ArrayList<List<Integer>>();`
+- **static imports**: `import static java.lang.Math.*;` likho, phir seedha `max(a, b)`.
+- **ek reusable template**, taaki boilerplate ek hi baar likhna pade.
+
+Code readable rakho — contest program chhota hota hai, par pressure mein debug bhi tumhe hi karna hai.
+
+</Hi>
+
+</Section>
+
+<Section id="1.5" title="Mathematics">
+
+### Sums and progressions
+
+<En>
+
+These closed forms come up constantly:
+
+</En>
+<Hi>
+
+Yeh closed forms baar-baar kaam aate hain:
+
+</Hi>
+
+$$
+\sum_{x=1}^{n} x = \frac{n(n+1)}{2}, \qquad \sum_{x=1}^{n} x^2 = \frac{n(n+1)(2n+1)}{6}
+$$
+
+<En>
+
+- **Arithmetic progression** (constant difference): $a + \dots + b = \frac{n(a+b)}{2}$ for n terms. Example: 3 + 7 + 11 + 15 = 4·18/2 = 36.
+- **Geometric progression** (constant ratio k): $a + ak + \dots + b = \frac{bk - a}{k - 1}$. Example: 3 + 6 + 12 + 24 = (48 − 3)/1 = 45, and in particular 1 + 2 + 4 + … + 2ⁿ⁻¹ = 2ⁿ − 1.
+- **Harmonic sum:** 1 + 1/2 + … + 1/n ≤ log₂ n + 1. This bound shows up later in complexity analysis.
+
+</En>
+<Hi>
+
+- **Arithmetic progression** (difference constant): n terms ke liye $a + \dots + b = \frac{n(a+b)}{2}$. Jaise 3 + 7 + 11 + 15 = 4·18/2 = 36.
+- **Geometric progression** (ratio k constant): $a + ak + \dots + b = \frac{bk - a}{k - 1}$. Jaise 3 + 6 + 12 + 24 = (48 − 3)/1 = 45, aur khaas taur pe 1 + 2 + 4 + … + 2ⁿ⁻¹ = 2ⁿ − 1.
+- **Harmonic sum:** 1 + 1/2 + … + 1/n ≤ log₂ n + 1 — yeh bound aage complexity analysis mein dikhega.
+
+</Hi>
+
+<JavaCode file="ch01/MathFormulas.java" region="sums" />
+<JavaCode file="ch01/MathFormulas.java" region="progressions" />
+
+### Sets, logic and functions
+
+<En>
+
+- **Sets:** a set S has 2^|S| subsets. Intersection (∩), union (∪), complement and difference (A \ B) are the operations you'll use, including later as bitmasks in chapter 10.
+- **Logic:** ¬ (not), ∧ (and), ∨ (or), ⇒ (implies), ⇔ (equivalent). ∀ means "for all" and ∃ means "there exists".
+- **Floor and ceiling:** ⌊x⌋ rounds down and ⌈x⌉ rounds up. Careful: Java's integer `/` **truncates toward zero**, so `-7 / 2` is `-3` while ⌊−7/2⌋ = −4. Use `Math.floorDiv`. For positive numbers, ⌈a/b⌉ is `(a + b - 1) / b`, with no floating point needed.
+- **Factorial** n! = 1·2·…·n, and **Fibonacci** f(0)=0, f(1)=1, f(n)=f(n−1)+f(n−2). f(90) still fits in a `long`; f(93) does not.
+
+</En>
+<Hi>
+
+- **Sets:** set S ke 2^|S| subsets hote hain. Intersection (∩), union (∪), complement aur difference (A \ B) — yahi operations use honge, chapter 10 mein bitmasks ki tarah bhi.
+- **Logic:** ¬ (not), ∧ (and), ∨ (or), ⇒ (implies), ⇔ (equivalent). ∀ = "sabke liye", ∃ = "koi to hai".
+- **Floor aur ceiling:** ⌊x⌋ neeche round, ⌈x⌉ upar round. Dhyaan do: Java ka integer `/` **zero ki taraf truncate** karta hai — `-7 / 2` = `-3`, jabki ⌊−7/2⌋ = −4. `Math.floorDiv` use karo. Positive numbers ke liye ⌈a/b⌉ = `(a + b - 1) / b` — floating point ki zaroorat hi nahi.
+- **Factorial** n! = 1·2·…·n, aur **Fibonacci** f(0)=0, f(1)=1, f(n)=f(n−1)+f(n−2). f(90) abhi bhi `long` mein fit hai; f(93) nahi.
+
+</Hi>
+
+<JavaCode file="ch01/MathFormulas.java" region="floorceil" />
+
+### Logarithms
+
+<En>
+
+log_k(x) = a exactly when kᵃ = x. Intuitively, it's **how many times you can divide x by k before reaching 1**: log₂ 32 = 5 because 32 → 16 → 8 → 4 → 2 → 1. That's why algorithms that halve something each step run in O(log n). Two facts are handy: log(ab) = log a + log b, and x has ⌊log_b x⌋ + 1 digits in base b. For example, 123 = 1111011₂ has 7 bits.
+
+</En>
+<Hi>
+
+log_k(x) = a tabhi jab kᵃ = x. Seedhi samajh: **x ko k se kitni baar divide karoge 1 tak pahunchne ke liye** — log₂ 32 = 5, kyunki 32 → 16 → 8 → 4 → 2 → 1. Isi wajah se jo algorithm har step pe kuch aadha karta hai, woh O(log n) mein chalta hai. Do kaam ki baatein: log(ab) = log a + log b, aur base b mein x ke ⌊log_b x⌋ + 1 digits hote hain — jaise 123 = 1111011₂ mein 7 bits.
+
+</Hi>
+
+<JavaCode file="ch01/MathFormulas.java" region="logs" />
+
+</Section>
+
+<Section id="1.6" title="Contests and resources">
+
+<En>
+
+- **IOI** is the olympiad for school students, and **ICPC** is the team contest for university students. ICPC's Asia regionals include several sites in India, and topics there need more maths than at the IOI.
+- **Online contests:** Codeforces (rated rounds most weeks), AtCoder, CodeChef and LeetCode's weekly contests. Google's Code Jam and Kick Start, mentioned in the book, were shut down in 2023.
+- **Practice:** this site links every chapter to the **CSES Problem Set** (cses.fi), written by the book's author. Solving its problems in order is a proven path.
+- **Books:** *Introduction to Algorithms* (CLRS), *Algorithm Design* (Kleinberg–Tardos), *The Algorithm Design Manual* (Skiena), and *Competitive Programming* (Halim).
+
+</En>
+<Hi>
+
+- **IOI** school students ka olympiad hai, aur **ICPC** university students ka team contest. ICPC ke Asia regionals ke kai sites India mein hote hain, aur wahan IOI se zyada maths chahiye.
+- **Online contests:** Codeforces (lagbhag har hafte rated rounds), AtCoder, CodeChef aur LeetCode ke weekly contests. Book mein jinka zikr hai, Google ke Code Jam aur Kick Start, woh 2023 mein band ho gaye.
+- **Practice:** is site ka har chapter **CSES Problem Set** (cses.fi) se juda hai — ise book ke author ne hi banaya hai. Iske problems order mein solve karna ek tested raasta hai.
+- **Books:** *Introduction to Algorithms* (CLRS), *Algorithm Design* (Kleinberg–Tardos), *The Algorithm Design Manual* (Skiena), aur *Competitive Programming* (Halim).
+
+</Hi>
+
+</Section>

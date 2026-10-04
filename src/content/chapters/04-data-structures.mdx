@@ -1,0 +1,229 @@
+---
+num: 4
+minutes: 40
+prerequisites: [3]
+learn:
+  - en: The Java collection for every C++ STL structure the book uses, with its cost per operation.
+    hi: Book ke har C++ STL structure ke liye Java collection — har operation ki cost ke saath.
+  - en: TreeSet and TreeMap navigation (floor, ceiling, higher, lower) — Java's replacement for C++ iterators.
+    hi: TreeSet aur TreeMap navigation (floor, ceiling, higher, lower) — C++ iterators ka Java jawab.
+  - en: The Java-specific traps — boxing, remove(int) vs remove(Object), null from get, min-heap by default.
+    hi: Java ke khaas traps — boxing, remove(int) vs remove(Object), get se null, default min-heap.
+---
+import TreeSetLab from '../../viz/algos/ch04/TreeSetLab';
+
+<En>
+
+Choosing a data structure is choosing which operations will be fast. The book walks through the C++ standard library. This page gives the Java collection you'd use for each one, plus the places where Java behaves differently.
+
+</En>
+<Hi>
+
+Data structure chunna = yeh chunna ki kaunse operations fast honge. Book C++ standard library dikhati hai; yeh page har ek ke liye woh Java collection deta hai jo tum use karoge — aur woh jagah bhi jahan Java alag behave karta hai.
+
+</Hi>
+
+<Section id="4.1" title="Dynamic arrays">
+
+<En>
+
+`ArrayList<E>` is C++'s `vector`: `add` at the end is amortised O(1) and `get(i)`/`set(i, x)` are O(1). Strings are immutable in Java. Build them with `StringBuilder` (repeated `+` in a loop is O(n²)), and note that `substring(begin, end)` takes an **end index**, not a length.
+
+</En>
+<Hi>
+
+`ArrayList<E>` C++ ka `vector` hai: end pe `add` amortised O(1), `get(i)`/`set(i, x)` O(1). Java mein strings immutable hain — `StringBuilder` se banao (loop mein baar baar `+` O(n²) hai), aur `substring(begin, end)` mein **end index** dete hain, length nahi.
+
+</Hi>
+
+<JavaCode file="ch04/CollectionsTour.java" region="list" />
+<JavaCode file="ch04/CollectionsTour.java" region="strings" />
+
+<Callout type="pitfall">
+
+<En>
+
+On a `List<Integer>`, `list.remove(1)` removes the element **at index 1**, not the value 1. To remove a value, write `list.remove(Integer.valueOf(1))`. Also, `ArrayList<Integer>` boxes every number. For big numeric data, prefer a plain `int[]`.
+
+</En>
+<Hi>
+
+`List<Integer>` pe `list.remove(1)` **index 1** wala element hatata hai, value 1 nahi. Value hatani ho toh `list.remove(Integer.valueOf(1))` likho. Aur `ArrayList<Integer>` har number ko box karta hai — bade numeric data ke liye seedha `int[]` behtar hai.
+
+</Hi>
+
+</Callout>
+
+</Section>
+
+<Section id="4.2" title="Set structures">
+
+<En>
+
+- `TreeSet` is C++'s `set`: a balanced tree, kept sorted, with O(log n) operations.
+- `HashSet` is `unordered_set`: hashing, O(1) on average, with no order.
+
+Both ignore duplicates. Java has **no multiset**, so store counts in a `TreeMap<Integer, Integer>` and delete a key when its count reaches 0.
+
+</En>
+<Hi>
+
+- `TreeSet` C++ ka `set` hai: balanced tree, hamesha sorted, O(log n) operations.
+- `HashSet` `unordered_set` hai: hashing, average O(1), koi order nahi.
+
+Dono duplicates ignore karte hain. Java mein **multiset nahi hai** — counts ko `TreeMap<Integer, Integer>` mein rakho, aur count 0 hote hi key hata do.
+
+</Hi>
+
+<JavaCode file="ch04/CollectionsTour.java" region="sets" />
+<JavaCode file="ch04/CollectionsTour.java" region="multiset" />
+
+</Section>
+
+<Section id="4.3" title="Map structures">
+
+<En>
+
+`TreeMap` is `map` (sorted keys, O(log n)) and `HashMap` is `unordered_map` (O(1) on average). The big behavioural difference from C++ is reading a missing key:
+
+- In C++, `m[key]` **inserts** the key with a default value.
+- In Java, `get` returns `null`, and unboxing that `null` into an `int` throws a `NullPointerException`.
+
+Use `getOrDefault(key, 0)`, and `merge(key, 1, Integer::sum)` to increment a counter.
+
+</En>
+<Hi>
+
+`TreeMap` = `map` (sorted keys, O(log n)), `HashMap` = `unordered_map` (average O(1)). C++ se sabse bada fark: missing key padhna.
+
+- C++ mein `m[key]` key ko default value ke saath **insert** kar deta hai.
+- Java mein `get` `null` deta hai — aur us `null` ko `int` mein unbox karoge toh `NullPointerException`.
+
+`getOrDefault(key, 0)` use karo, aur counter badhane ke liye `merge(key, 1, Integer::sum)`.
+
+</Hi>
+
+<JavaCode file="ch04/CollectionsTour.java" region="maps" />
+
+</Section>
+
+<Section id="4.4" title="Iterators and ranges">
+
+<En>
+
+C++ moves iterators around a `set` (`lower_bound`, `it--`). Java's `TreeSet` answers those questions directly, in O(log n), and returns `null` when there is no answer:
+
+| C++ idea | Java `TreeSet` |
+|---|---|
+| `*s.begin()` / last element | `first()` / `last()` |
+| `lower_bound(x)` (smallest ≥ x) | `ceiling(x)` |
+| `upper_bound(x)` (smallest > x) | `higher(x)` |
+| previous element (largest ≤ x / < x) | `floor(x)` / `lower(x)` |
+| a range of elements | `subSet(a, true, b, false)`, `headSet`, `tailSet` |
+
+The book's "element nearest to x" becomes four lines with `ceiling` and `floor`:
+
+</En>
+<Hi>
+
+C++ `set` pe iterators chalata hai (`lower_bound`, `it--`). Java ka `TreeSet` yahi sawaal seedha O(log n) mein jawab deta hai — aur jawab na ho toh `null`:
+
+| C++ idea | Java `TreeSet` |
+|---|---|
+| `*s.begin()` / aakhri element | `first()` / `last()` |
+| `lower_bound(x)` (≥ x mein sabse chhota) | `ceiling(x)` |
+| `upper_bound(x)` (> x mein sabse chhota) | `higher(x)` |
+| pichhla element (≤ x / < x mein sabse bada) | `floor(x)` / `lower(x)` |
+| elements ki range | `subSet(a, true, b, false)`, `headSet`, `tailSet` |
+
+Book ka "x ke sabse paas wala element" `ceiling` aur `floor` se chaar lines ka ho jaata hai:
+
+</Hi>
+
+<JavaCode file="ch04/CollectionsTour.java" region="navigation" />
+
+<TreeSetLab client:visible />
+
+<Callout type="pitfall">
+
+<En>
+
+`headSet(x).size()` looks like "how many elements are below x" but it is **O(n)**, not O(log n). Java has no built-in order-statistics tree (C++'s policy-based `indexed_set`). When you need a rank or the k-th element, compress the values and use a Fenwick tree (chapter 9).
+
+</En>
+<Hi>
+
+`headSet(x).size()` dekhne mein "x se neeche kitne elements" lagta hai, par yeh **O(n)** hai, O(log n) nahi. Java mein order-statistics tree (C++ ka policy-based `indexed_set`) built-in nahi hai — rank ya k-th element chahiye toh values compress karke Fenwick tree lagao (chapter 9).
+
+</Hi>
+
+</Callout>
+
+</Section>
+
+<Section id="4.5" title="Other structures">
+
+<En>
+
+- **Deque, stack and queue:** use `ArrayDeque` for all three. Use `push`/`pop`/`peek` for a stack, `offer`/`poll`/`peek` for a queue, and `addFirst`/`addLast`/`pollFirst`/`pollLast` for a deque. Avoid the legacy `Stack` class and `LinkedList`, which are slower.
+- **Priority queue:** Java's `PriorityQueue` is a **min**-heap by default, the opposite of C++. For a max-heap, pass `Collections.reverseOrder()`. Insert and remove are O(log n), and peeking is O(1).
+- **Bitset:** `java.util.BitSet` stores one bit per element and supports `and`, `or`, `xor` and `cardinality()`. Chapter 10 does more with bits.
+
+</En>
+<Hi>
+
+- **Deque, stack, queue:** teeno ke liye `ArrayDeque`. Stack ke liye `push`/`pop`/`peek`, queue ke liye `offer`/`poll`/`peek`, deque ke liye `addFirst`/`addLast`/`pollFirst`/`pollLast`. Purani `Stack` class aur `LinkedList` se bacho — slow hain.
+- **Priority queue:** Java ka `PriorityQueue` default **min**-heap hai — C++ ka ulta! Max-heap ke liye `Collections.reverseOrder()` do. Insert/remove O(log n), peek O(1).
+- **Bitset:** `java.util.BitSet` har element ke liye ek bit rakhta hai, aur `and`, `or`, `xor`, `cardinality()` deta hai. Chapter 10 mein bits pe aur kaam.
+
+</Hi>
+
+<JavaCode file="ch04/CollectionsTour.java" region="deque" />
+<JavaCode file="ch04/CollectionsTour.java" region="pq" />
+<JavaCode file="ch04/CollectionsTour.java" region="bitset" />
+
+</Section>
+
+<Section id="4.6" title="Comparison to sorting">
+
+<En>
+
+**Problem:** how many values appear in both lists A and B (n values each)? There are three approaches:
+
+- a `TreeSet`, which is O(n log n);
+- a `HashSet`, which is O(n) on average;
+- **sorting both lists and walking them with two pointers**, which is O(n log n).
+
+In the book's C++ timings, sorting was the fastest by far, about 10× faster than the tree-based set at the **same** O(n log n). Sorting runs once with a tiny constant, while the tree pays a large constant on every operation. In Java the gap is even bigger, because the sets also box every number.
+
+</En>
+<Hi>
+
+**Problem:** do lists A aur B (har ek mein n values) mein kitni values common hain? Teen approaches:
+
+- `TreeSet` — O(n log n);
+- `HashSet` — average O(n);
+- **dono lists sort karke two pointers se chalna** — O(n log n).
+
+Book ki C++ timings mein sorting sabse tez tha — **same** O(n log n) hote hue bhi tree wale set se ~10× tez. Sorting ek baar chalta hai aur uska constant chhota hai, jabki tree har operation pe bada constant bharta hai. Java mein yeh fark aur bada hai, kyunki sets har number ko box bhi karte hain.
+
+</Hi>
+
+<JavaCode file="ch04/CommonElements.java" region="sorting" />
+
+<Callout type="insight">
+
+<En>
+
+Same complexity doesn't mean the same speed. When an approach that sorts once is possible, it's often the fastest, simplest and safest choice.
+
+</En>
+<Hi>
+
+Same complexity ka matlab same speed nahi. Agar ek baar sort karke kaam ban sakta hai, toh aksar wahi sabse tez, sabse simple aur sabse safe raasta hai.
+
+</Hi>
+
+</Callout>
+
+</Section>

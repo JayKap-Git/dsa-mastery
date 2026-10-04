@@ -1,4 +1,5 @@
 import type { Role } from '../engine/types';
+import { useKeepInView } from './useKeepInView';
 
 export interface HeapTreeViewProps {
   /** Heap-indexed values: tree[1] is the root, children of k are 2k and 2k+1. Index 0 is unused. */
@@ -21,6 +22,7 @@ const SLOT = 54;
 
 /** A perfect binary tree stored heap-style (segment trees, heaps). */
 export function HeapTreeView({ tree, n, roles = {}, showIndex = true, leafLabel, badges = {} }: HeapTreeViewProps) {
+  const scroller = useKeepInView<HTMLDivElement>([tree, roles, badges]);
   const levels = Math.round(Math.log2(n)) + 1;
   const W = n * SLOT;
   const H = levels * LEVEL_H + (leafLabel ? 14 : 0);
@@ -61,7 +63,7 @@ export function HeapTreeView({ tree, n, roles = {}, showIndex = true, leafLabel,
   }
 
   return (
-    <div className="arr-scroll">
+    <div className="arr-scroll" ref={scroller}>
       <svg className="tree-svg" viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="img" aria-label="tree">
         {edges}
         {nodes}

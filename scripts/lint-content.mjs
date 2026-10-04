@@ -52,7 +52,7 @@ for (const name of readdirSync(chapterDir).filter((f) => f.endsWith('.mdx'))) {
   for (const m of src.matchAll(/<JavaCode file="([^"]+)" region="([^"]+)"/g)) checkRegion(where, m[1], m[2]);
 
   // 4. Every visualiser used is registered for /playground.
-  const used = [...src.matchAll(/<(\w+Viz)\b[^>]*client:visible/g)].length;
+  const used = [...src.matchAll(/<([A-Z]\w+)\b[^>]*client:visible/g)].length; // every island in a chapter is a visualiser
   const registered = VISUALIZERS.filter((v) => v.chapter === num).length;
   if (used !== registered) fail(where, `${used} visualisers embedded but ${registered} listed in src/data/visualizers.ts`);
 

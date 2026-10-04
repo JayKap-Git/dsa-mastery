@@ -1,0 +1,205 @@
+---
+num: 3
+minutes: 45
+prerequisites: [2]
+learn:
+  - en: Why simple sorts are O(n²), how merge sort reaches O(n log n), and how counting sort beats that bound.
+    hi: Simple sorts O(n²) kyun hain, merge sort O(n log n) tak kaise pahunchta hai, aur counting sort us limit ko kaise todta hai.
+  - en: Sort anything in Java — primitives, objects, pairs, custom orders — without the classic traps.
+    hi: Java mein kuch bhi sort karna — primitives, objects, pairs, custom order — classic traps ke bina.
+  - en: Binary search done right, including lower/upper bound and "binary search on the answer".
+    hi: Sahi binary search — lower/upper bound aur "answer pe binary search" ke saath.
+---
+import SortViz from '../../viz/algos/ch03/SortViz';
+import BinarySearchViz from '../../viz/algos/ch03/BinarySearchViz';
+
+<En>
+
+Sorting is everywhere because sorted data is easy to process. Duplicates end up next to each other, the most frequent value forms the longest run, and binary search becomes possible. Efficient sorting takes O(n log n), so many algorithms that sort first are O(n log n) too.
+
+</En>
+<Hi>
+
+Sorting har jagah hai kyunki sorted data ke saath kaam aasaan hota hai: duplicates ek saath aa jaate hain, sabse frequent value sabse lambi run banti hai, aur binary search possible ho jaata hai. Efficient sorting O(n log n) leta hai, isliye jo algorithms pehle sort karte hain woh bhi aksar O(n log n) hote hain.
+
+</Hi>
+
+<Section id="3.1" title="Sorting theory">
+
+### O(n²): bubble sort and inversions
+
+<En>
+
+Bubble sort makes n rounds, and each round swaps every neighbouring pair that's out of order. After k rounds, the k largest values are in place.
+
+An **inversion** is a pair (i, j) with i < j but a[i] > a[j]. `[1, 2, 2, 6, 3, 5, 9, 8]` has three: (6,3), (6,5) and (9,8). Swapping two neighbours removes **exactly one** inversion. A reversed array has n(n−1)/2 inversions, so **any** sort that only swaps neighbours is O(n²).
+
+</En>
+<Hi>
+
+Bubble sort n rounds chalta hai; har round mein galat order wale har padosi pair ko swap karta hai. k rounds ke baad k sabse badi values apni jagah pe hoti hain.
+
+**Inversion** ek pair (i, j) hai jahan i < j par a[i] > a[j]. `[1, 2, 2, 6, 3, 5, 9, 8]` mein teen hain: (6,3), (6,5), (9,8). Do padosiyon ka swap **theek ek** inversion hatata hai, aur reversed array mein n(n−1)/2 inversions hote hain — isliye sirf padosi swap karne wala **koi bhi** sort O(n²) hai.
+
+</Hi>
+
+<JavaCode file="ch03/SortingAlgorithms.java" region="bubble" />
+
+### O(n log n): merge sort
+
+<En>
+
+Merge sort splits the range in half, sorts each half recursively, then **merges** the two sorted halves in linear time by repeatedly taking the smaller front element. There are about log₂ n levels of halving and each level does O(n) work, so the total is O(n log n).
+
+</En>
+<Hi>
+
+Merge sort range ko aadha karta hai, dono halves ko recursively sort karta hai, phir dono sorted halves ko linear time mein **merge** karta hai — baar baar aage wale do elements mein se chhota utha ke. Halving ke lagbhag log₂ n levels hain aur har level O(n) kaam karta hai: total O(n log n).
+
+</Hi>
+
+<JavaCode file="ch03/SortingAlgorithms.java" region="merge" />
+
+<SortViz client:visible />
+
+### The lower bound, and counting sort
+
+<En>
+
+No sort that works only by **comparing** elements can beat O(n log n). There are n! possible orders, and each comparison has two outcomes, so you need at least log₂(n!) ≥ (n/2)·log₂(n/2) comparisons. That bound only applies to comparison sorts. **Counting sort** never compares. For values in 0..c, it counts each value in an array of size c + 1, then writes the values out in order, for O(n + c) total. That's linear when c = O(n).
+
+</En>
+<Hi>
+
+Jo sort sirf elements ko **compare** karke kaam karta hai, woh O(n log n) se tez nahi ho sakta. n! possible orders hain aur har comparison ke do hi results, toh kam se kam log₂(n!) ≥ (n/2)·log₂(n/2) comparisons chahiye. Yeh limit sirf comparison sorts pe hai. **Counting sort** compare karta hi nahi: values 0..c mein hon, toh c + 1 size ke array mein har value gino, phir order mein likh do. Total O(n + c) — c = O(n) ho toh linear.
+
+</Hi>
+
+<JavaCode file="ch03/SortingAlgorithms.java" region="counting" />
+
+</Section>
+
+<Section id="3.2" title="Sorting in Java">
+
+<En>
+
+Never hand-write a sort in a contest; the library version is correct and fast. Here's how the book's C++ maps to Java:
+
+| C++ | Java |
+|---|---|
+| `sort(v.begin(), v.end())` on ints | `Arrays.sort(int[])` (shuffle first, see below) |
+| `sort` on objects | `Arrays.sort(T[])`, `Collections.sort(list)`, `list.sort(cmp)` |
+| `sort(v.rbegin(), v.rend())` | `Arrays.sort(Integer[], Collections.reverseOrder())` |
+| `pair<int,int>` order | `int[][]` + a comparator on `[0]` then `[1]` |
+| `operator<` in a struct | `implements Comparable<T>` |
+| comparison function | `Comparator.comparingInt(...).thenComparing(...)` |
+
+</En>
+<Hi>
+
+Contest mein kabhi khud ka sort mat likho — library wala sahi bhi hai aur fast bhi. Book ka C++ Java mein aise map hota hai:
+
+| C++ | Java |
+|---|---|
+| ints pe `sort(v.begin(), v.end())` | `Arrays.sort(int[])` (pehle shuffle — neeche dekho) |
+| objects pe `sort` | `Arrays.sort(T[])`, `Collections.sort(list)`, `list.sort(cmp)` |
+| `sort(v.rbegin(), v.rend())` | `Arrays.sort(Integer[], Collections.reverseOrder())` |
+| `pair<int,int>` wala order | `int[][]` + `[0]` phir `[1]` pe comparator |
+| struct mein `operator<` | `implements Comparable<T>` |
+| comparison function | `Comparator.comparingInt(...).thenComparing(...)` |
+
+</Hi>
+
+<JavaCode file="ch03/JavaSorting.java" region="primitives" />
+
+<Callout type="pitfall">
+
+<En>
+
+`Arrays.sort(int[])` is a quicksort. On older Java versions, an adversarial test can push it to O(n²). Codeforces "anti-quicksort" hacks did exactly that. Shuffling first is O(n) insurance. Object arrays and lists use a merge sort (TimSort), which is always O(n log n) and stable.
+
+</En>
+<Hi>
+
+`Arrays.sort(int[])` ek quicksort hai. Purane Java versions pe ek khaas test ise O(n²) tak le ja sakta hai — Codeforces ke "anti-quicksort" hacks yahi karte the. Pehle shuffle karna O(n) ka insurance hai. Object arrays aur lists merge sort (TimSort) use karte hain: hamesha O(n log n), aur stable.
+
+</Hi>
+
+</Callout>
+
+<JavaCode file="ch03/JavaSorting.java" region="pairs" />
+<JavaCode file="ch03/JavaSorting.java" region="comparable" />
+<JavaCode file="ch03/JavaSorting.java" region="comparator" />
+
+<Callout type="java">
+
+<En>
+
+Never write a comparator as `(p, q) -> p - q`. For `Integer.MIN_VALUE` and `1` the subtraction overflows and the order comes out backwards (the self-test checks this). Use `Integer.compare(p, q)` or `Comparator.comparingInt(...)`.
+
+</En>
+<Hi>
+
+Comparator kabhi `(p, q) -> p - q` mat likho. `Integer.MIN_VALUE` aur `1` ke liye subtraction overflow hota hai aur order ulta ho jaata hai (self-test yeh check karta hai). `Integer.compare(p, q)` ya `Comparator.comparingInt(...)` use karo.
+
+</Hi>
+
+</Callout>
+
+</Section>
+
+<Section id="3.3" title="Binary search">
+
+<En>
+
+In a **sorted** array you don't need to scan everything. Two equivalent methods, both O(log n):
+
+- **Method 1 (halving):** keep an active region [lo, hi] and check its middle. If the middle value is too big, go left; if it's too small, go right.
+- **Method 2 (jumps):** walk from the left with jump lengths n/2, n/4, …, 1, never stepping onto a value larger than x.
+
+</En>
+<Hi>
+
+**Sorted** array mein sab kuch scan karne ki zaroorat nahi. Do barabar tareeke, dono O(log n):
+
+- **Method 1 (halving):** ek active region [lo, hi] rakho, beech wala dekho. Woh bada hai toh left jao, chhota hai toh right.
+- **Method 2 (jumps):** left se n/2, n/4, …, 1 lambi jumps se chalo, kabhi x se badi value pe mat utro.
+
+</Hi>
+
+<JavaCode file="ch03/BinarySearch.java" region="method1" />
+<JavaCode file="ch03/BinarySearch.java" region="method2" />
+
+<BinarySearchViz client:visible />
+
+### Lower and upper bound
+
+<En>
+
+C++ has `lower_bound` (first element ≥ x) and `upper_bound` (first element > x). Their difference counts how often x occurs. Java's `Arrays.binarySearch` is **not** the same: with duplicates it returns *some* matching index, and for a missing value it returns `-(insertionPoint) - 1`. Write your own bounds; they're only six lines:
+
+</En>
+<Hi>
+
+C++ mein `lower_bound` (pehla element ≥ x) aur `upper_bound` (pehla element > x) hain — dono ka difference batata hai x kitni baar hai. Java ka `Arrays.binarySearch` **waisa nahi** hai: duplicates mein *koi bhi* matching index deta hai, aur missing value pe `-(insertionPoint) - 1`. Apne bounds khud likho — sirf chhe lines:
+
+</Hi>
+
+<JavaCode file="ch03/BinarySearch.java" region="bounds" />
+
+### Binary search on the answer
+
+<En>
+
+Binary search works on any **monotone yes/no question**, not just arrays. If `ok(x)` is false for x < k and true for x ≥ k, jumping finds the smallest valid k with O(log z) calls to `ok`. "What is the minimum time to make t products?" is a typical example: `ok(T)` asks whether t products can be made in time T. The same idea finds the peak of a function that first increases and then decreases, as long as no two neighbouring values are equal.
+
+</En>
+<Hi>
+
+Binary search kisi bhi **monotone haan/naa sawaal** pe chalta hai, sirf arrays pe nahi. Agar `ok(x)` x < k ke liye false aur x ≥ k ke liye true hai, toh jumps se sabse chhota valid k O(log z) baar `ok` call karke mil jaata hai. "t products banane ka minimum time kya hai?" iska typical example hai — `ok(T)` poochta hai: kya T time mein t products ban sakte hain? Yahi idea pehle badhne aur phir ghatne wale function ka peak bhi dhundh leta hai, bas padosi values barabar na hon.
+
+</Hi>
+
+<JavaCode file="ch03/BinarySearch.java" region="smallest" />
+
+</Section>

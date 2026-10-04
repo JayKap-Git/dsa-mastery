@@ -1,0 +1,203 @@
+---
+num: 2
+minutes: 35
+prerequisites: [1]
+learn:
+  - en: Read the time complexity straight off loops, phases and recursion.
+    hi: Loops, phases aur recursion se seedha time complexity padhna.
+  - en: Use input limits to guess the complexity a problem expects, before writing code.
+    hi: Code likhne se pehle hi input limits se andaza lagana ki problem kaunsi complexity maang rahi hai.
+  - en: See one problem solved in O(n³), O(n²) and O(n), and why the last one wins.
+    hi: Ek hi problem ko O(n³), O(n²) aur O(n) mein solve hote dekhna — aur aakhri wala kyun jeet-ta hai.
+---
+import ComplexityExplorer from '../../viz/algos/ch02/ComplexityExplorer';
+import KadaneViz from '../../viz/algos/ch02/KadaneViz';
+
+<En>
+
+A slow but correct idea is usually easy to find. The real work is a **fast enough** idea. Time complexity estimates how running time grows with the input size n, so you can reject an approach **before** implementing it.
+
+</En>
+<Hi>
+
+Slow par sahi idea aksar aasaan hota hai — asli kaam hai **kaafi fast** idea dhundhna. Time complexity batati hai ki input size n badhne pe time kaise badhta hai, taaki tum kisi approach ko implement karne se **pehle** hi reject kar sako.
+
+</Hi>
+
+<Section id="2.1" title="Calculation rules">
+
+<En>
+
+- **Loops:** k nested loops over the input give O(nᵏ).
+- **Order of magnitude:** constants and lower-order terms disappear. Loops running 3n, n + 5 or ⌈n/2⌉ times are all O(n), and a loop over pairs `j > i` (n(n−1)/2 steps) is still O(n²).
+- **Phases:** consecutive phases cost as much as the slowest one, so O(n) + O(n²) + O(n) = O(n²).
+- **Several variables:** a loop over n rows and m columns is O(nm).
+- **Recursion:** (number of calls) × (cost per call). `f(n)` that calls `f(n−1)` makes n calls, so O(n). `g(n)` that calls `g(n−1)` **twice** makes 1 + 2 + 4 + … + 2ⁿ⁻¹ = 2ⁿ − 1 calls, so O(2ⁿ).
+
+</En>
+<Hi>
+
+- **Loops:** input pe k nested loops = O(nᵏ).
+- **Order of magnitude:** constants aur chhote terms gayab ho jaate hain. 3n, n + 5 ya ⌈n/2⌉ baar chalne wale loops sab O(n) hain, aur pairs `j > i` wala loop (n(n−1)/2 steps) bhi O(n²) hi hai.
+- **Phases:** ek ke baad ek phases ka cost sabse slow phase jitna — O(n) + O(n²) + O(n) = O(n²).
+- **Kai variables:** n rows aur m columns pe loop = O(nm).
+- **Recursion:** (calls ki ginti) × (har call ka cost). `f(n)` jo `f(n−1)` call kare: n calls, O(n). `g(n)` jo `g(n−1)` ko **do baar** call kare: 1 + 2 + 4 + … + 2ⁿ⁻¹ = 2ⁿ − 1 calls, O(2ⁿ).
+
+</Hi>
+
+<JavaCode file="ch02/LoopShapes.java" region="magnitude" />
+<JavaCode file="ch02/LoopShapes.java" region="recursion" />
+
+<Callout type="insight">
+
+<En>
+
+These methods count how many times their body runs, and `LoopShapes.java` **tests** each claim: 3n, n + 5, ⌈n/2⌉, n(n−1)/2, n calls and 2ⁿ − 1 calls. When unsure about a complexity, count it the same way on a few small n.
+
+</En>
+<Hi>
+
+Yeh methods ginte hain ki unki body kitni baar chali, aur `LoopShapes.java` har claim ko **test** karta hai: 3n, n + 5, ⌈n/2⌉, n(n−1)/2, n calls aur 2ⁿ − 1 calls. Complexity pe doubt ho, toh chhote n pe aise hi gin ke dekh lo.
+
+</Hi>
+
+</Callout>
+
+</Section>
+
+<Section id="2.2" title="Complexity classes">
+
+<En>
+
+| Class | Typical cause |
+|---|---|
+| O(1) | a direct formula |
+| O(log n) | halving the input each step (binary search) |
+| O(√n) | e.g. trial division up to √n |
+| O(n) | one or a few passes over the input |
+| O(n log n) | sorting, or n operations on an O(log n) data structure |
+| O(n²) | all pairs (two nested loops) |
+| O(n³) | all triples |
+| O(2ⁿ) | all subsets |
+| O(n!) | all permutations |
+
+Everything up to O(nᵏ) is **polynomial**, which in practice means efficient. For **NP-hard** problems, no polynomial algorithm is known.
+
+</En>
+<Hi>
+
+| Class | Aam wajah |
+|---|---|
+| O(1) | seedha formula |
+| O(log n) | har step input aadha (binary search) |
+| O(√n) | jaise √n tak trial division |
+| O(n) | input pe ek ya kuch passes |
+| O(n log n) | sorting, ya O(log n) data structure pe n operations |
+| O(n²) | saare pairs (do nested loops) |
+| O(n³) | saari triples |
+| O(2ⁿ) | saare subsets |
+| O(n!) | saare permutations |
+
+O(nᵏ) tak sab **polynomial** hai — practically efficient. **NP-hard** problems ke liye koi polynomial algorithm pata nahi hai.
+
+</Hi>
+
+</Section>
+
+<Section id="2.3" title="Estimating efficiency">
+
+<En>
+
+A judge does roughly 10⁸ simple operations per second. Plug n into your complexity: with n = 10⁵, O(n²) is 10¹⁰ steps, around 100 seconds, so it is far too slow. The limits also hint at the intended solution:
+
+</En>
+<Hi>
+
+Judge lagbhag 10⁸ simple operations per second karta hai. Apni complexity mein n daalo: n = 10⁵ pe O(n²) = 10¹⁰ steps ≈ 100 seconds — bahut slow. Limits khud batati hain ki kaunsa solution chahiye:
+
+</Hi>
+
+<ComplexityExplorer client:visible />
+
+<Callout type="java">
+
+<En>
+
+Complexity hides constant factors, and Java has a few of its own:
+
+- `ArrayList<Integer>` and `HashMap<Integer, …>` box every number, which makes them several times slower than `int[]`.
+- `Scanner` alone can take a second on big input.
+- The JIT needs a moment to warm up.
+
+When an O(n log n) solution is borderline, switch to primitive arrays and the fast template before changing the algorithm.
+
+</En>
+<Hi>
+
+Complexity constant factors chhupa leti hai, aur Java ke apne kuch constant factors hain:
+
+- `ArrayList<Integer>` aur `HashMap<Integer, …>` har number ko box karte hain — `int[]` se kai guna slow.
+- Akela `Scanner` bade input pe ek second kha sakta hai.
+- JIT ko warm up hone mein thoda time lagta hai.
+
+O(n log n) solution border pe ho, toh algorithm badalne se pehle primitive arrays aur fast template pe shift karo.
+
+</Hi>
+
+</Callout>
+
+</Section>
+
+<Section id="2.4" title="Maximum subarray sum">
+
+<En>
+
+**Problem:** find the largest sum of consecutive elements. The empty subarray counts, so the answer is at least 0. In `[-1, 2, 4, -3, 5, 2, -5, 2]`, the best is 2 + 4 − 3 + 5 + 2 = **10**.
+
+- **O(n³):** try every start and end, and add the elements in between.
+- **O(n²):** fix the start and extend the end one step at a time, keeping a running sum, which removes one loop.
+- **O(n), Kadane:** for each position k, keep `sum` = the best subarray sum **ending at k**. That's either `a[k]` alone or the best one ending at k−1 extended by `a[k]`, whichever is larger.
+
+</En>
+<Hi>
+
+**Problem:** lagaatar elements ka sabse bada sum. Empty subarray allowed hai, toh answer kam se kam 0. `[-1, 2, 4, -3, 5, 2, -5, 2]` mein best hai 2 + 4 − 3 + 5 + 2 = **10**.
+
+- **O(n³):** har start aur end try karo, beech ke elements jodo.
+- **O(n²):** start fix karo, end ek-ek step badhao, running sum rakho — ek loop hat gaya.
+- **O(n), Kadane:** har position k ke liye `sum` = k pe **khatam hone wala** best subarray sum. Yeh ya toh akela `a[k]` hai, ya k−1 pe khatam hone wala best + `a[k]` — jo bhi bada ho.
+
+</Hi>
+
+<JavaCode file="ch02/MaxSubarray.java" region="quadratic" />
+<JavaCode file="ch02/MaxSubarray.java" region="kadane" />
+
+<KadaneViz client:visible />
+
+<En>
+
+The book's timings show why the complexity matters more than anything else. At n = 10⁴, the O(n³) version already takes over 10 seconds. At n = 10⁵, the O(n²) one takes 5.3 s. Kadane handles n = 10⁷ instantly.
+
+</En>
+<Hi>
+
+Book ki timings dikhati hain ki complexity sabse zyada kyun matter karti hai: n = 10⁴ pe O(n³) wala 10 second se zyada leta hai, n = 10⁵ pe O(n²) wala 5.3 s, aur Kadane n = 10⁷ bhi turant kar deta hai.
+
+</Hi>
+
+<Callout type="pitfall">
+
+<En>
+
+CSES *Maximum Subarray Sum* requires a **non-empty** subarray, so an all-negative array must return its largest element, not 0. Start with `best = a[0]` instead of `0`.
+
+</En>
+<Hi>
+
+CSES ka *Maximum Subarray Sum* **non-empty** subarray maangta hai — saare negative hon toh answer sabse bada element hai, 0 nahi. `best = 0` ki jagah `best = a[0]` se shuru karo.
+
+</Hi>
+
+</Callout>
+
+</Section>

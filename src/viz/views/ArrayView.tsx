@@ -1,5 +1,6 @@
 import type { Bi, Role } from '../engine/types';
 import { T } from '../engine/T';
+import { useKeepInView } from './useKeepInView';
 
 export interface Pointer {
   at: number; // position (0-based slot in `values`)
@@ -32,10 +33,11 @@ export interface ArrayViewProps {
 /** A row of array cells with index labels, pointer arrows and range brackets underneath. */
 export function ArrayView({ values, base = 0, indexLabels, roles = {}, pointers = [], ranges = [], title, hideIndex, cell = 44 }: ArrayViewProps) {
   const cols = `repeat(${values.length}, ${cell}px)`;
+  const scroller = useKeepInView<HTMLDivElement>([values, roles, pointers]);
   return (
     <div className="arr">
       {title && <div className="arr-title"><T v={title} ui /></div>}
-      <div className="arr-scroll">
+      <div className="arr-scroll" ref={scroller}>
         <div className="arr-grid" style={{ gridTemplateColumns: cols }}>
           {!hideIndex &&
             values.map((_, i) => (

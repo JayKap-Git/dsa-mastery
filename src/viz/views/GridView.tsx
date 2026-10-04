@@ -1,5 +1,6 @@
 import type { Bi, Role } from '../engine/types';
 import { T } from '../engine/T';
+import { useKeepInView } from './useKeepInView';
 
 export interface Region {
   r1: number; c1: number; r2: number; c2: number; // inclusive cell coordinates
@@ -26,11 +27,12 @@ export function GridView({ rows, rowLabels, colLabels, roles = {}, regions = [],
   const hasColLab = !!colLabels;
   const lab = hasRowLab ? 40 : 0;
   const head = hasColLab ? 24 : 0;
+  const scroller = useKeepInView<HTMLDivElement>([rows, roles, regions]);
 
   return (
     <div className="grid-view">
       {title && <div className="arr-title"><T v={title} ui /></div>}
-      <div className="arr-scroll">
+      <div className="arr-scroll" ref={scroller}>
         <div className="gv" style={{ width: lab + nCols * cell, height: head + rows.length * cell }}>
           {hasColLab && hasRowLab && <span className="gv-corner" style={{ width: lab, height: head }}>{corner}</span>}
           {colLabels?.map((c, j) => (
