@@ -3,5 +3,6 @@ GITHUB_CLIENT_ID=your-dev-oauth-app-client-id
 GITHUB_CLIENT_SECRET=your-dev-oauth-app-client-secret
 SESSION_SECRET=any-long-random-string-for-local-dev
 APP_URL=http://localhost:4321
+ALLOWED_ORIGINS=http://localhost:4321,http://localhost:4329
 # Enables POST /auth/dev-login for local end-to-end tests. Never set in production.
 DEV_LOGIN=true

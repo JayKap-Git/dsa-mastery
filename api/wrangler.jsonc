@@ -5,22 +5,26 @@
   "compatibility_date": "2026-08-22",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
-  // api.jayantkapoor.com — Cloudflare creates the DNS record and certificate on deploy.
-  "routes": [{ "pattern": "api.jayantkapoor.com", "custom_domain": true }],
+  // api.jayantkapoor.com: the custom domain owns the DNS record + certificate. The explicit route makes this
+  // Worker win over any broader wildcard route in the zone (e.g. a portfolio on *jayantkapoor.com/*),
+  // because the most specific route pattern wins.
+  "routes": [
+    { "pattern": "api.jayantkapoor.com", "custom_domain": true },
+    { "pattern": "api.jayantkapoor.com/*", "zone_name": "jayantkapoor.com" }
+  ],
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "dsa-mastery",
-      // Filled in after `wrangler d1 create dsa-mastery`; any value works for local dev and tests.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "b2c8c2ad-15c9-41a3-bb18-1c960d639409",
       "migrations_dir": "migrations"
     }
   ],
   "vars": {
     "APP_URL": "https://dsa.jayantkapoor.com",
-    "ALLOWED_ORIGINS": "https://dsa.jayantkapoor.com,http://localhost:4321,http://localhost:4329",
-    "GITHUB_CLIENT_ID": "set-after-creating-the-oauth-app"
+    "ALLOWED_ORIGINS": "https://dsa.jayantkapoor.com",
+    "GITHUB_CLIENT_ID": "Ov23libgWP31xa2oJ1kL"
   }
   // Secrets (never in this file): GITHUB_CLIENT_SECRET, SESSION_SECRET.
-  // Local dev: api/.dev.vars (gitignored) also sets DEV_LOGIN=true and dev values for the vars above.
+  // Local dev: api/.dev.vars (gitignored) overrides these with localhost origins and sets DEV_LOGIN=true.
 }

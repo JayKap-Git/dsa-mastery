@@ -14,6 +14,7 @@ export default defineConfig(async () => {
             GITHUB_CLIENT_SECRET: 'test-client-secret',
             SESSION_SECRET: 'test-session-secret',
             APP_URL: 'https://dsa.jayantkapoor.com',
+            ALLOWED_ORIGINS: 'https://dsa.jayantkapoor.com',
             DEV_LOGIN: 'true',
           },
         },
