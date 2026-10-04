@@ -1,6 +1,6 @@
 // Read-side helpers over the item store, plus the small set of write actions the UI uses.
 import { get, list, put, remove } from './items';
-import type { CsesStatus, Values } from './kinds';
+import type { CsesStatus, Values } from '../../../shared/kinds';
 
 /** Local calendar date as YYYY-MM-DD (the key for `day` items). */
 export function dayKey(d = new Date()): string {

@@ -7,9 +7,9 @@ The reader is Jayant: intermediate DSA, writes **Java only**, wants English + **
 ## Accounts and sync (stateful layer)
 - The site stays static. State lives in `src/lib/store/` (offline-first, localStorage) and syncs to the
   **Worker in `api/`** (Hono + D1) at `api.jayantkapoor.com` when the user signs in with GitHub.
-- Every synced thing is an **item** `(kind, key, value, updatedAt)`; rules + limits in `src/lib/store/kinds.ts`,
+- Every synced thing is an **item** `(kind, key, value, updatedAt)`; rules + limits in `shared/kinds.ts`,
   shared by client and Worker. Merge = last-writer-wins on `updatedAt` (quiz attempts are append-only keys).
-  New kind? Add it to `kinds.ts` (key regex + value check), then selectors/actions in `selectors.ts`.
+  New kind? Add it to `shared/kinds.ts` (key regex + value check), then selectors/actions in `selectors.ts`.
 - UI code never touches localStorage directly: read with selectors, write with the actions in `selectors.ts`,
   re-render via `subscribe()` (vanilla, in `src/scripts/ui/*`) or `useStore()` (React).
 - Anonymous visitors make **zero** API calls; only a browser that signed in before calls `/me` and syncs.

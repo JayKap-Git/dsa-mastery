@@ -1,7 +1,7 @@
 // Account + sync engine. Signed out: nothing here runs and the site works from local storage.
 // Signed in: local changes are pushed and everyone else's are pulled, last-writer-wins per item.
 import { API_URL } from '../config';
-import { LIMITS, type RemoteItem } from './kinds';
+import { LIMITS, type RemoteItem } from '../../../shared/kinds';
 import { ackOps, applyRemote, clearAll, pendingOps, subscribe } from './items';
 
 export interface User {

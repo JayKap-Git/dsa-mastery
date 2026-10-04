@@ -1,0 +1,15 @@
+{
+  // Code shared by the site (src/) and the Worker (api/). Standalone on purpose: it must not
+  // depend on either project's packages, because CI installs them separately.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true
+  },
+  "include": ["*.ts"]
+}

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Op, RemoteItem } from './kinds';
+import type { Op, RemoteItem } from '../../../shared/kinds';
 import { _useStorage, ackOps, applyRemote, get, pendingOps, put } from './items';
 import { migrateV1 } from './migrate';
 import { allNotes, bestQuiz, cses, dayKey, heatmap, note, quizHistory, recordQuiz, sectionsDone, setCses, setNote, setSectionDone, streak } from './selectors';

@@ -1,6 +1,6 @@
 // CSES tracker on practice lists: status per problem + your saved Java solution.
 import { subscribe } from '../../lib/store/items';
-import type { CsesStatus } from '../../lib/store/kinds';
+import type { CsesStatus } from '../../../shared/kinds';
 import { cses, setCses, solvedCount } from '../../lib/store/selectors';
 
 export function initCses() {

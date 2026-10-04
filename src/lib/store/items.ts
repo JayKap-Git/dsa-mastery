@@ -1,7 +1,7 @@
 // The local item store: every piece of study state, kept in this browser's localStorage.
 // It is the source of truth for the UI (instant, works offline). Each local change is also queued
 // in an outbox, which the sync engine (./sync.ts) sends to the server when the user is signed in.
-import { isNewer, validateOp, type Kind, type Op, type RemoteItem, type Values } from './kinds';
+import { isNewer, validateOp, type Kind, type Op, type RemoteItem, type Values } from '../../../shared/kinds';
 
 const ITEMS_KEY = 'dsa-mastery:items:v2';
 const OUTBOX_KEY = 'dsa-mastery:outbox:v2';

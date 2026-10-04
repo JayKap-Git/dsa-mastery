@@ -1,5 +1,5 @@
 import type { Context } from 'hono';
-import { LIMITS, validateOp, type Op, type RemoteItem } from '../../src/lib/store/kinds';
+import { LIMITS, validateOp, type Op, type RemoteItem } from '../../shared/kinds';
 import type { AppEnv } from './types';
 
 interface Row { kind: string; key: string; value: string; updated_at: number; deleted: number; server_seq: number }
