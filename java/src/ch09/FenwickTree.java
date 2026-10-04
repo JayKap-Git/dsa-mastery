@@ -59,7 +59,7 @@ public class FenwickTree {
     }
     // #endregion
 
-    public static void main(String[] args) {
+    public static void main(String[] args) { // @selftest
         // Book example: [1, 3, 4, 8, 6, 1, 4, 2] → tree [1, 4, 4, 16, 6, 7, 4, 29], sumq(1,7) = 16 + 7 + 4 = 27
         int[] book = {1, 3, 4, 8, 6, 1, 4, 2};
         FenwickTree f = of(book);

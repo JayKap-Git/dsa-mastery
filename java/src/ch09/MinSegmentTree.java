@@ -55,7 +55,7 @@ public class MinSegmentTree {
     }
     // #endregion
 
-    public static void main(String[] args) {
+    public static void main(String[] args) { // @selftest
         // Book example: [5, 8, 6, 3, 1, 7, 2, 6] → root 1, and the minimum sits at index 4
         MinSegmentTree st = new MinSegmentTree(new int[] {5, 8, 6, 3, 1, 7, 2, 6});
         long[] expect = {0, 1, 3, 1, 5, 3, 1, 2, 5, 8, 6, 3, 1, 7, 2, 6};

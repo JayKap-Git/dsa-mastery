@@ -31,7 +31,7 @@ public class SparseTable {
     }
     // #endregion
 
-    public static void main(String[] args) {
+    public static void main(String[] args) { // @selftest
         // Book example: [1, 3, 4, 8, 6, 1, 4, 2], minq(1, 6) = min(minq(1,4), minq(3,6)) = min(3, 1) = 1
         SparseTable st = new SparseTable(new int[] {1, 3, 4, 8, 6, 1, 4, 2});
         check(st.min(1, 4) == 3 && st.min(3, 6) == 1 && st.min(1, 6) == 1, "book minq");

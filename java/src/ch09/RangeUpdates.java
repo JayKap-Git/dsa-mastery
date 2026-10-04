@@ -52,7 +52,7 @@ public class RangeUpdates {
     }
     // #endregion
 
-    public static void main(String[] args) {
+    public static void main(String[] args) { // @selftest
         // Book example: [3, 3, 1, 1, 1, 5, 2, 2] → d = [3, 0, -2, 0, 0, 4, -3, 0];
         // adding 5 to positions 1..4 gives d = [3, 5, -2, 0, 0, -1, -3, 0]
         long[] d = difference(new int[] {3, 3, 1, 1, 1, 5, 2, 2});

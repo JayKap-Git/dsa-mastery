@@ -18,7 +18,7 @@ public class IndexCompression {
     }
     // #endregion
 
-    public static void main(String[] args) {
+    public static void main(String[] args) { // @selftest
         // Book example: indices 555, 10^9 and 8 become c(8) = 1, c(555) = 2, c(10^9) = 3
         int[] c = compress(new int[] {555, 1_000_000_000, 8});
         check(Arrays.equals(c, new int[] {2, 3, 1}), "book example");

@@ -46,7 +46,7 @@ public class SegmentTree {
     // #endregion
     // #endregion
 
-    public static void main(String[] args) {
+    public static void main(String[] args) { // @selftest
         // Book example: [5, 8, 6, 3, 2, 7, 2, 6] → root 39, sumq(2, 7) = 9 + 17 = 26
         SegmentTree st = new SegmentTree(new int[] {5, 8, 6, 3, 2, 7, 2, 6});
         long[] expect = {0, 39, 22, 17, 13, 9, 9, 8, 5, 8, 6, 3, 2, 7, 2, 6};

@@ -44,7 +44,7 @@ public class PrefixSums {
     }
     // #endregion
 
-    public static void main(String[] args) {
+    public static void main(String[] args) { // @selftest
         // Book example: [1, 3, 4, 8, 6, 1, 4, 2] → prefix [1, 4, 8, 16, 22, 23, 27, 29], sumq(3, 6) = 19
         long[] p = build(new int[] {1, 3, 4, 8, 6, 1, 4, 2});
         check(p[7] == 29 && p[2] == 8, "book prefix array");
