@@ -1,0 +1,601 @@
+---
+num: 9
+minutes: 90
+prerequisites: [2, 4]
+learn:
+  - en: Answer sum queries on a static array in O(1) with prefix sums, in one and two dimensions.
+    hi: Static array pe sum queries O(1) mein — 1D aur 2D prefix sums se.
+  - en: Answer minimum queries in O(1) after O(n log n) preprocessing with a sparse table.
+    hi: Sparse table se O(n log n) preprocessing ke baad minimum queries O(1) mein.
+  - en: Support value updates between queries with a Fenwick tree and a segment tree, both O(log n).
+    hi: Queries ke beech values update bhi ho — Fenwick tree aur segment tree se, dono O(log n).
+  - en: Handle huge indices with index compression, and range updates with a difference array.
+    hi: Bade indices ke liye index compression, aur range updates ke liye difference array.
+---
+import PrefixSumViz from '../../viz/algos/ch09/PrefixSumViz';
+import Prefix2DViz from '../../viz/algos/ch09/Prefix2DViz';
+import SparseTableViz from '../../viz/algos/ch09/SparseTableViz';
+import FenwickViz from '../../viz/algos/ch09/FenwickViz';
+import SegmentTreeViz from '../../viz/algos/ch09/SegmentTreeViz';
+import CompressViz from '../../viz/algos/ch09/CompressViz';
+import RangeUpdateViz from '../../viz/algos/ch09/RangeUpdateViz';
+
+<En>
+
+A **range query** asks for a value computed from a subarray `[a, b]` of an array. The three classics are:
+
+- `sumq(a, b)` — the sum of the values in `[a, b]`
+- `minq(a, b)` — the minimum value in `[a, b]`
+- `maxq(a, b)` — the maximum value in `[a, b]`
+
+For the array `[1, 3, 8, 4, 6, 1, 3, 4]` and the range `[3, 6]` (values 4, 6, 1, 3): `sumq(3, 6) = 14`, `minq(3, 6) = 1` and `maxq(3, 6) = 6`.
+
+The obvious approach loops over the range. That costs O(n) per query, so q queries cost O(nq). With n = q = 2·10⁵ that is 4·10¹⁰ steps, far too slow. This chapter is about doing better: first for arrays that never change, then for arrays that get updated between queries.
+
+</En>
+<Hi>
+
+**Range query** ka matlab hai: array ke kisi subarray `[a, b]` pe koi value nikaalna. Teen classic queries hain:
+
+- `sumq(a, b)` — `[a, b]` ki saari values ka sum
+- `minq(a, b)` — `[a, b]` mein sabse chhoti value
+- `maxq(a, b)` — `[a, b]` mein sabse badi value
+
+Array `[1, 3, 8, 4, 6, 1, 3, 4]` aur range `[3, 6]` lo (values 4, 6, 1, 3): `sumq(3, 6) = 14`, `minq(3, 6) = 1` aur `maxq(3, 6) = 6`.
+
+Seedha tareeka hai range pe loop chalana. Har query O(n), toh q queries O(nq). Agar n = q = 2·10⁵ ho, toh 4·10¹⁰ steps — time limit mein bilkul nahi chalega. Is chapter mein hum isse kaafi better karna seekhenge: pehle aise arrays ke liye jo kabhi badalte nahi, phir aise arrays ke liye jinme queries ke beech updates aate hain.
+
+</Hi>
+
+<Section id="9.1" title="Static array queries">
+
+<En>
+
+When the array is **static** (never updated between queries), we can spend some time up front building a structure that answers any query quickly.
+
+</En>
+<Hi>
+
+Jab array **static** ho (queries ke beech kabhi update nahi hota), tab hum shuru mein thoda time lagakar ek structure bana sakte hain jo phir har query ka jawab jaldi de de.
+
+</Hi>
+
+### Sum queries: prefix sums
+
+<En>
+
+Build a **prefix sum array** `p` where `p[k]` is the sum of `arr[0..k]`, i.e. `p[k] = sumq(0, k)`. Each entry is the previous one plus one new element, so the whole array takes O(n) to build.
+
+For `arr = [1, 3, 4, 8, 6, 1, 4, 2]` we get `p = [1, 4, 8, 16, 22, 23, 27, 29]`.
+
+Now any range sum is the difference of two prefix sums:
+
+</En>
+<Hi>
+
+Ek **prefix sum array** `p` banao jisme `p[k]` = `arr[0..k]` ka sum, yaani `p[k] = sumq(0, k)`. Har entry = pichhli entry + ek naya element. Toh poora array O(n) mein ban jaata hai.
+
+`arr = [1, 3, 4, 8, 6, 1, 4, 2]` ke liye `p = [1, 4, 8, 16, 22, 23, 27, 29]` milta hai.
+
+Ab koi bhi range sum, do prefix sums ka difference hai. Socho: 0 se b tak ka total lo, aur usme se 0 se a−1 tak ka total hata do — beech wala hissa bach jayega:
+
+</Hi>
+
+$$
+\text{sumq}(a, b) = \text{sumq}(0, b) - \text{sumq}(0, a - 1)
+$$
+
+<En>
+
+We define `sumq(0, −1) = 0`, so the formula also works when `a = 0`. Example: `sumq(3, 6) = p[6] − p[2] = 27 − 8 = 19`, which matches 8 + 6 + 1 + 4.
+
+</En>
+<Hi>
+
+`sumq(0, −1) = 0` maan lete hain, taaki `a = 0` pe bhi formula chal jaye. Example: `sumq(3, 6) = p[6] − p[2] = 27 − 8 = 19` — check karo, 8 + 6 + 1 + 4 = 19. Ekdum sahi!
+
+</Hi>
+
+<JavaCode file="ch09/PrefixSums.java" region="build" />
+<JavaCode file="ch09/PrefixSums.java" region="query" />
+
+<PrefixSumViz client:visible />
+
+<Callout type="java">
+
+<En>
+
+**Use `long[]` for prefix sums.** With n = 2·10⁵ values up to 10⁹, a prefix sum can reach 2·10¹⁴, far above `Integer.MAX_VALUE` (≈ 2.1·10⁹). Java will not warn you: the `int` silently wraps around to a wrong (often negative) value.
+
+A common alternative is an array of size n + 1 with `p[0] = 0` and `p[k + 1] = p[k] + arr[k]`. Then `sumq(a, b) = p[b + 1] − p[a]`, with no `a > 0` check.
+
+</En>
+<Hi>
+
+**Prefix sums ke liye `long[]` lo.** n = 2·10⁵ aur values 10⁹ tak hon, toh prefix sum 2·10¹⁴ tak ja sakta hai — `Integer.MAX_VALUE` (≈ 2.1·10⁹) se bahut zyada. Java koi warning nahi deta: `int` chupchaap overflow hokar galat (aksar negative) value de deta hai.
+
+Ek aur popular tareeka: n + 1 size ka array, `p[0] = 0` aur `p[k + 1] = p[k] + arr[k]`. Phir `sumq(a, b) = p[b + 1] − p[a]` — `a > 0` wala check hi nahi chahiye.
+
+</Hi>
+
+</Callout>
+
+### Two-dimensional prefix sums
+
+<En>
+
+The same idea works in 2D. Let `s[i][j]` be the sum of the rectangle from the top-left corner to `(i, j)`. Then the sum of any rectangle is
+
+**S(A) − S(B) − S(C) + S(D)**
+
+where `A` is the rectangle's bottom-right corner, `B` the cell just above its top-right corner, `C` the cell just left of its bottom-left corner, and `D` the cell diagonally up-left of its top-left corner. Each `S(X)` is the prefix rectangle ending at `X`. B and C both contain D's area, so D gets subtracted twice and has to be added back once. That is inclusion–exclusion.
+
+Building `s` uses the same trick in reverse: `s[i][j] = cell + s[i−1][j] + s[i][j−1] − s[i−1][j−1]`.
+
+</En>
+<Hi>
+
+Yahi idea 2D mein bhi chalta hai. `s[i][j]` = top-left corner se `(i, j)` tak ke rectangle ka sum. Phir kisi bhi rectangle ka sum hai:
+
+**S(A) − S(B) − S(C) + S(D)**
+
+`A` humare rectangle ka bottom-right corner hai, `B` uske top-right ke theek upar wala cell, `C` bottom-left ke theek left wala cell, aur `D` top-left ke diagonal upar-left wala cell. Har `S(X)` corner se `X` tak ka prefix rectangle hai. Dhyaan do: B aur C dono mein D ka area aata hai — toh D do baar minus ho gaya. Isliye ek baar wapas jodna padta hai. Isi ko inclusion–exclusion kehte hain.
+
+`s` banane mein bhi yahi trick ulti chalti hai: `s[i][j] = cell + s[i−1][j] + s[i][j−1] − s[i−1][j−1]`.
+
+</Hi>
+
+<JavaCode file="ch09/PrefixSums.java" region="build2d" />
+<JavaCode file="ch09/PrefixSums.java" region="query2d" />
+
+<Prefix2DViz client:visible />
+
+<Callout type="insight">
+
+<En>
+
+The zero row and zero column (index 0) are not wasted memory. They are what lets the query formula work even when the rectangle touches the top or left edge: no `if` statements needed.
+
+</En>
+<Hi>
+
+Zero row aur zero column (index 0) memory ki barbaadi nahi hain. Inhi ki wajah se rectangle top ya left edge ko touch kare tab bhi formula bina kisi `if` ke chal jaata hai.
+
+</Hi>
+
+</Callout>
+
+### Minimum queries: the sparse table
+
+<En>
+
+Minimum queries are harder: you can't "subtract" a minimum the way you subtract a sum. Still, after **O(n log n)** preprocessing we can answer any `minq(a, b)` in **O(1)**. (Max works the same way.)
+
+The idea is to precompute `minq` for every range whose length is a **power of two**: lengths 1, 2, 4, 8, …. There are O(log n) such lengths and n starting points, so O(n log n) values in total. Each one comes from two halves of half the length:
+
+</En>
+<Hi>
+
+Minimum queries thodi mushkil hain: sum ki tarah minimum ko "subtract" nahi kar sakte. Phir bhi **O(n log n)** preprocessing ke baad koi bhi `minq(a, b)` **O(1)** mein mil sakta hai. (Max bhi bilkul aise hi.)
+
+Idea: har us range ka `minq` pehle se nikaal lo jiski length **power of two** ho — 1, 2, 4, 8, …. Aisi O(log n) lengths hain aur n starting points, toh total O(n log n) values. Har value apne do halves (aadhi length wale) se ban jaati hai:
+
+</Hi>
+
+$$
+\text{minq}(a, b) = \min\big(\text{minq}(a,\ a + w - 1),\ \text{minq}(a + w,\ b)\big), \quad w = \tfrac{b - a + 1}{2}
+$$
+
+<En>
+
+**Query.** Let `k` be the largest power of two with `k ≤ b − a + 1`. Two blocks of length `k`, one starting at `a` and one ending at `b`, together cover `[a, b]`. They may overlap, and for minimum that's fine:
+
+`minq(a, b) = min(minq(a, a + k − 1), minq(b − k + 1, b))`
+
+Example on `[1, 3, 4, 8, 6, 1, 4, 2]`: the range `[1, 6]` has length 6, so `k = 4`, and `[1, 6] = [1, 4] ∪ [3, 6]`. Since `minq(1, 4) = 3` and `minq(3, 6) = 1`, the answer is `1`.
+
+</En>
+<Hi>
+
+**Query.** `k` = sabse bada power of two jo `b − a + 1` se chhota ya barabar ho. Length `k` ke do blocks — ek `a` se shuru, ek `b` pe khatam — milkar poora `[a, b]` cover kar lete hain. Beech mein overlap ho sakta hai, aur minimum ke liye isse koi farak nahi padta:
+
+`minq(a, b) = min(minq(a, a + k − 1), minq(b − k + 1, b))`
+
+Example `[1, 3, 4, 8, 6, 1, 4, 2]` pe: range `[1, 6]` ki length 6 hai, toh `k = 4`, aur `[1, 6] = [1, 4] ∪ [3, 6]`. `minq(1, 4) = 3` aur `minq(3, 6) = 1`, toh answer `1`.
+
+</Hi>
+
+<JavaCode file="ch09/SparseTable.java" region="build" />
+<JavaCode file="ch09/SparseTable.java" region="query" />
+
+<SparseTableViz client:visible />
+
+<Callout type="pitfall">
+
+<En>
+
+The overlap trick needs an **idempotent** operation, one where combining a value with itself changes nothing: `min`, `max`, `gcd`, bitwise `and`/`or`. For sums, the overlapping elements would be counted twice. Use prefix sums for those.
+
+</En>
+<Hi>
+
+Overlap wali trick sirf **idempotent** operations pe chalti hai — jahan ek value ko khud se combine karne pe kuch na badle: `min`, `max`, `gcd`, bitwise `and`/`or`. Sum pe overlap wale elements do baar jud jayenge. Sum ke liye prefix sums hi use karo.
+
+</Hi>
+
+</Callout>
+
+<Callout type="java">
+
+<En>
+
+`31 - Integer.numberOfLeadingZeros(len)` is ⌊log₂ len⌋ in one CPU instruction. Avoid `(int) (Math.log(len) / Math.log(2))`: floating-point rounding can give 2.9999… for `len = 8` and break the table. A 2·10⁵ × 18 `int` table is about 14 MB, which fits in typical 256 MB limits.
+
+</En>
+<Hi>
+
+`31 - Integer.numberOfLeadingZeros(len)` ek hi CPU instruction mein ⌊log₂ len⌋ de deta hai. `(int) (Math.log(len) / Math.log(2))` mat likhna — floating-point rounding se `len = 8` pe 2.9999… aa sakta hai aur table toot jayega. 2·10⁵ × 18 ka `int` table lagbhag 14 MB hai — normal 256 MB limit mein aaram se fit.
+
+</Hi>
+
+</Callout>
+
+<Complexity
+  caption="Static queries"
+  rows={[
+    ['Prefix sums: build', 'O(n)', 'one pass'],
+    ['Prefix sums: sumq(a, b)', 'O(1)', 'two lookups'],
+    ['2D prefix sums: build / query', 'O(R·C) / O(1)', 'four lookups'],
+    ['Sparse table: build', 'O(n log n)', 'log n rows'],
+    ['Sparse table: minq(a, b)', 'O(1)', 'two overlapping blocks'],
+  ]}
+/>
+
+</Section>
+
+<Section id="9.2" title="Binary indexed tree">
+
+<En>
+
+A prefix sum array breaks as soon as you **update** a value: every prefix after it changes, so you'd rebuild in O(n). A **binary indexed tree**, also called a **Fenwick tree**, is a dynamic version of prefix sums. Both of its operations are O(log n):
+
+- `sum(k)`: compute `sumq(1, k)`
+- `add(k, x)`: increase the value at position `k` by `x`
+
+Fenwick trees are **1-indexed**, which makes the bit tricks below work out cleanly.
+
+</En>
+<Hi>
+
+Prefix sum array tab tak hi kaam ka hai jab tak koi value **update** na ho. Ek value badli, toh uske baad ka har prefix badal jaata hai — O(n) mein dobara banana padega. **Binary indexed tree** (jise **Fenwick tree** bhi kehte hain) prefix sums ka dynamic version hai. Iske dono operations O(log n) mein:
+
+- `sum(k)`: `sumq(1, k)` nikaalo
+- `add(k, x)`: position `k` ki value mein `x` jodo
+
+Fenwick tree **1-indexed** hota hai — isi se neeche wali bit tricks saaf-suthri chalti hain.
+
+</Hi>
+
+### Structure
+
+<En>
+
+Let `p(k)` be the largest power of two that divides `k`. The tree is just an array where
+
+`tree[k] = sumq(k − p(k) + 1, k)`
+
+so each position stores the sum of the `p(k)` elements **ending at k**. For example `p(6) = 2`, so `tree[6] = sumq(5, 6)`; and `p(8) = 8`, so `tree[8]` holds the sum of the first eight elements.
+
+For `arr = [1, 3, 4, 8, 6, 1, 4, 2]` (positions 1–8) the tree is `[1, 4, 4, 16, 6, 7, 4, 29]`. The bars in the visualiser below draw these ranges.
+
+**Query.** Any prefix `[1, k]` splits into O(log n) stored ranges. For example, `sumq(1, 7) = sumq(1, 4) + sumq(5, 6) + sumq(7, 7) = 16 + 7 + 4 = 27`. For a general range use the prefix-sum trick: `sumq(a, b) = sumq(1, b) − sumq(1, a − 1)`.
+
+**Update.** Changing position 3 affects every stored range containing it: `tree[3]`, `tree[4]` and `tree[8]`. Each position belongs to O(log n) ranges.
+
+</En>
+<Hi>
+
+`p(k)` = sabse bada power of two jo `k` ko divide karta hai. Tree bas ek array hai jisme
+
+`tree[k] = sumq(k − p(k) + 1, k)`
+
+yaani har position pe un `p(k)` elements ka sum hai jo **k pe khatam** hote hain. Jaise `p(6) = 2`, toh `tree[6] = sumq(5, 6)`; aur `p(8) = 8`, toh `tree[8]` mein pehle aath elements ka sum hai.
+
+`arr = [1, 3, 4, 8, 6, 1, 4, 2]` (positions 1–8) ke liye tree hai `[1, 4, 4, 16, 6, 7, 4, 29]`. Neeche visualiser mein bars inhi ranges ko dikhate hain — ek baar dhyaan se dekho.
+
+**Query.** Koi bhi prefix `[1, k]` O(log n) stored ranges mein toot jaata hai. Jaise `sumq(1, 7) = sumq(1, 4) + sumq(5, 6) + sumq(7, 7) = 16 + 7 + 4 = 27`. General range ke liye wahi prefix-sum trick: `sumq(a, b) = sumq(1, b) − sumq(1, a − 1)`.
+
+**Update.** Position 3 badli, toh har woh stored range badlegi jisme 3 aata hai: `tree[3]`, `tree[4]` aur `tree[8]`. Har position sirf O(log n) ranges mein hoti hai.
+
+</Hi>
+
+### Implementation: `k & -k`
+
+<En>
+
+The key fact is that `p(k) = k & -k`. In two's complement, `-k` is `~k + 1`: every bit flips, and the +1 carries up to the lowest 1-bit of `k`. So `k` and `-k` share **only** that lowest 1-bit, and `&` isolates it. For `k = 12 = 1100₂`, `k & -k = 0100₂ = 4`.
+
+- `sum` walks **down**: `k -= k & -k` clears the lowest 1-bit, which jumps to the end of the next range to the left.
+- `add` walks **up**: `k += k & -k` moves to the next range that also contains position `k`.
+
+Each step removes a 1-bit (sum) or pushes the lowest 1-bit higher (add). A number has at most ⌊log₂ n⌋ + 1 bits, so both loops are O(log n).
+
+</En>
+<Hi>
+
+Asli trick: `p(k) = k & -k`. Two's complement mein `-k` = `~k + 1` — saare bits ulat jaate hain, aur +1 ka carry `k` ke sabse neeche wale 1-bit tak pahunch jaata hai. Isliye `k` aur `-k` mein **sirf** wahi lowest 1-bit common hota hai, aur `&` use alag kar deta hai. `k = 12 = 1100₂` ke liye `k & -k = 0100₂ = 4`.
+
+- `sum` **neeche** chalta hai: `k -= k & -k` lowest 1-bit hata deta hai — yaani left wali agli range ke end pe jump.
+- `add` **upar** chalta hai: `k += k & -k` us agli range pe le jaata hai jisme position `k` bhi aati hai.
+
+Har step ya toh ek 1-bit hatata hai (sum) ya lowest 1-bit ko upar dhakelta hai (add). Kisi number mein max ⌊log₂ n⌋ + 1 bits hote hain, isliye dono loops O(log n).
+
+</Hi>
+
+<JavaCode file="ch09/FenwickTree.java" region="full" />
+
+<FenwickViz client:visible />
+
+<Callout type="java">
+
+<En>
+
+**Build in O(n), not O(n log n).** Calling `add` n times works, but you can instead let each range pass its total to the next range up. This is the `of` method below (it's in the tested `FenwickTree.java`). Remember to allocate `n + 1` slots: index 0 is unused.
+
+</En>
+<Hi>
+
+**O(n) mein build karo, O(n log n) mein nahi.** n baar `add` call karna chalta hai, par isse fast tareeka hai: har range apna total agli upar wali range ko de de — neeche `of` method dekho (yeh tested `FenwickTree.java` mein hai). `n + 1` size allocate karna mat bhoolna — index 0 khaali rehta hai.
+
+</Hi>
+
+</Callout>
+
+<JavaCode file="ch09/FenwickTree.java" region="build" />
+
+</Section>
+
+<Section id="9.3" title="Segment tree">
+
+<En>
+
+A **segment tree** also supports range queries and value updates in O(log n), but it is more **general** than a Fenwick tree. A Fenwick tree needs an operation you can undo (sum: subtract the prefix), while a segment tree handles minimum, maximum, gcd, xor and much more. The price is about twice the memory and slightly more code.
+
+</En>
+<Hi>
+
+**Segment tree** bhi range query aur value update dono O(log n) mein karta hai, par yeh Fenwick tree se zyada **general** hai. Fenwick ko aisa operation chahiye jise undo kar sako (sum mein prefix ghata do), jabki segment tree minimum, maximum, gcd, xor aur bahut kuch sambhal leta hai. Keemat: lagbhag double memory aur thoda zyada code.
+
+</Hi>
+
+### Structure
+
+<En>
+
+A segment tree is a binary tree whose **leaves are the array elements**. Every internal node stores the answer (here: the sum) for the range of leaves below it. Assume `n` is a power of two and indices are 0-based. For `[5, 8, 6, 3, 2, 7, 2, 6]` the levels are `39`, then `22 17`, then `13 9 9 8`, then the array itself.
+
+**Query.** Any range splits into O(log n) nodes. Taking nodes as **high** as possible, you never need more than two per level. For `[2, 7]`, `sumq(2, 7) = 26` comes from just two nodes: `9` (covering `[2, 3]`) + `17` (covering `[4, 7]`).
+
+**Update.** Changing one value only affects the nodes on the path from that leaf to the root. That's O(log n) nodes.
+
+</En>
+<Hi>
+
+Segment tree ek binary tree hai jiske **leaves array ke elements hain**. Har internal node apne neeche wale leaves ki range ka answer (yahan: sum) store karta hai. Maan lo `n` power of two hai aur indexing 0-based. `[5, 8, 6, 3, 2, 7, 2, 6]` ke liye levels hain: `39`, phir `22 17`, phir `13 9 9 8`, phir khud array.
+
+**Query.** Koi bhi range O(log n) nodes mein toot jaati hai. Agar nodes jitna ho sake **upar** se lo, toh kisi bhi level pe do se zyada nodes nahi lagte. `[2, 7]` ke liye `sumq(2, 7) = 26` sirf do nodes se aata hai: `9` (`[2, 3]` cover karta hai) + `17` (`[4, 7]` cover karta hai).
+
+**Update.** Ek value badli, toh sirf us leaf se root tak ke path wale nodes badalte hain — O(log n) nodes.
+
+</Hi>
+
+### Implementation: a tree inside an array
+
+<En>
+
+Store the tree in one array of size `2n`, top to bottom like a heap. `tree[1]` is the root, the children of `tree[k]` are `tree[2k]` and `tree[2k + 1]`, and its parent is `tree[k / 2]`. The leaves (the original array) sit at `tree[n] … tree[2n − 1]`. So **left children have even indices and right children have odd indices**, and the query loop relies on exactly that.
+
+The query keeps a range `[a, b]` of node indices, starting at the leaves `[a + n, b + n]`, and climbs one level per iteration:
+
+- If `a` is **odd**, it's a right child. Its parent would also cover something to the left of our range, so add `tree[a]` on its own and step `a` right.
+- If `b` is **even**, it's a left child. Its parent would spill past the right end, so add `tree[b]` on its own and step `b` left.
+- Then `a /= 2; b /= 2` moves up a level. Stop when `a > b`.
+
+</En>
+<Hi>
+
+Poore tree ko `2n` size ke ek array mein rakho, upar se neeche, heap ki tarah. `tree[1]` root hai, `tree[k]` ke children `tree[2k]` aur `tree[2k + 1]`, aur parent `tree[k / 2]`. Leaves (original array) `tree[n] … tree[2n − 1]` pe baithte hain. Matlab **left children ke index even, right children ke odd** — query loop isi baat pe tika hai.
+
+Query node indices ki ek range `[a, b]` rakhti hai — leaves `[a + n, b + n]` se shuru — aur har iteration mein ek level upar chadhti hai:
+
+- Agar `a` **odd** hai, toh woh right child hai. Uska parent humari range ke left ka hissa bhi le lega — isliye `tree[a]` ko akele jodo aur `a` ko ek right khiskao.
+- Agar `b` **even** hai, toh woh left child hai. Uska parent right end se bahar chala jayega — isliye `tree[b]` akele jodo aur `b` ko ek left khiskao.
+- Phir `a /= 2; b /= 2` — ek level upar. Jab `a > b` ho jaye, ruk jao.
+
+</Hi>
+
+<JavaCode file="ch09/SegmentTree.java" region="full" />
+
+<SegmentTreeViz client:visible />
+
+<Callout type="insight">
+
+<En>
+
+Watch the badges `a` and `b` in the visualiser. They start at the two ends of the range and walk towards each other while climbing. Each level contributes at most one node from each side, and that's the whole O(log n) argument.
+
+</En>
+<Hi>
+
+Visualiser mein `a` aur `b` ke badges dekho. Dono range ke do ends se shuru hote hain aur upar chadhte hue ek-doosre ki taraf aate hain. Har level pe har side se max ek node judta hai — poora O(log n) ka proof bas itna hi hai.
+
+</Hi>
+
+</Callout>
+
+### Other queries
+
+<En>
+
+A segment tree works for **any** query where you can split a range into two parts, answer each part, and **combine** the answers: minimum, maximum, gcd, and bitwise and/or/xor. Only the combine function and its identity value change. In the min tree below, every node holds the smallest value in its range, and the root holds the minimum of the whole array.
+
+Switch the visualiser above to **min** to try it. In the min tree the structure also allows a **binary search**: to find *where* the minimum is, walk down from the root, always into a child holding the same value. That takes O(log n).
+
+</En>
+<Hi>
+
+Segment tree **har** us query pe chalta hai jahan range ko do hisson mein tod sako, dono ka answer nikaal sako, aur un answers ko **combine** kar sako: minimum, maximum, gcd, bitwise and/or/xor. Badalta sirf combine function aur uski identity value hai. Neeche wale min tree mein har node apni range ki sabse chhoti value rakhta hai, aur root poore array ka minimum.
+
+Upar wale visualiser ko **min** pe switch karke khud try karo. Min tree mein **binary search** bhi ho jaata hai: minimum *kahan* hai, yeh dhundhne ke liye root se neeche utro, hamesha us child mein jo same value rakhta ho — O(log n).
+
+</Hi>
+
+<JavaCode file="ch09/MinSegmentTree.java" region="min" />
+<JavaCode file="ch09/MinSegmentTree.java" region="argmin" />
+
+<Callout type="java">
+
+<En>
+
+**Identity values.** Start a sum at `0`, a min at `Long.MAX_VALUE`, a max at `Long.MIN_VALUE`, a gcd at `0`, and a xor at `0`.
+
+**Arrays that aren't a power of two.** Padding with identity values up to the next power of two always works. As a bonus, for commutative operations like sum and min, this exact bottom-up code is correct for **any** `n` without padding (`SegmentTree.java` tests this on random sizes). The tree-walking `argmin` does need the padded, perfect tree.
+
+</En>
+<Hi>
+
+**Identity values.** Sum `0` se shuru karo, min `Long.MAX_VALUE` se, max `Long.MIN_VALUE` se, gcd `0` se, aur xor `0` se.
+
+**Power of two nahi hai toh?** Agle power of two tak identity values se pad kar do — yeh hamesha chalta hai. Bonus: sum aur min jaise commutative operations ke liye yahi bottom-up code **kisi bhi** `n` pe bina padding ke sahi chalta hai (`SegmentTree.java` random sizes pe yeh test karta hai). Par tree mein neeche utarne wale `argmin` ko padded, perfect tree hi chahiye.
+
+</Hi>
+
+</Callout>
+
+<Complexity
+  caption="Dynamic queries"
+  rows={[
+    ['Fenwick tree: build', 'O(n)', 'or O(n log n) with n adds'],
+    ['Fenwick tree: sum(k), add(k, x)', 'O(log n)', 'sums only (invertible ops)'],
+    ['Segment tree: build', 'O(n)', 'bottom-up, 2n memory'],
+    ['Segment tree: query, update', 'O(log n)', 'any associative op'],
+    ['Min segment tree: argmin', 'O(log n)', 'walk down from the root'],
+  ]}
+/>
+
+</Section>
+
+<Section id="9.4" title="Additional techniques">
+
+### Index compression
+
+<En>
+
+Array-based structures need indices `0, 1, 2, …`. What if the indices are huge, like 10⁹? An array that size would never fit in memory. If you know **all the indices in advance**, you can **compress** them: replace each index `x` with `c(x)`, its rank among the distinct indices. The order stays the same, so if `a < b` then `c(a) < c(b)`, and every query still makes sense.
+
+For example, the indices 555, 10⁹ and 8 become `c(8) = 1`, `c(555) = 2`, `c(10⁹) = 3`.
+
+</En>
+<Hi>
+
+Array-based structures ko indices `0, 1, 2, …` chahiye. Par agar indices bahut bade hon, jaise 10⁹? Itna bada array memory mein kabhi fit nahi hoga. Agar **saare indices pehle se pata hon**, toh unhe **compress** kar sakte ho: har index `x` ko `c(x)` se replace karo — yaani distinct indices mein uski rank. Order wahi rehta hai (`a < b` toh `c(a) < c(b)`), isliye har query ka matlab bhi wahi rehta hai.
+
+Jaise indices 555, 10⁹ aur 8 ban jaate hain `c(8) = 1`, `c(555) = 2`, `c(10⁹) = 3`.
+
+</Hi>
+
+<JavaCode file="ch09/IndexCompression.java" region="compress" />
+
+<CompressViz client:visible />
+
+<Callout type="java">
+
+<En>
+
+This only works **offline**: read all queries first, collect every value that will ever be used as an index, compress, and then answer. If you need `c(x)` for values in arbitrary order during queries, `Arrays.binarySearch` on the sorted distinct array is O(log n). A `HashMap<Integer, Integer>` is O(1) on average but slower in practice.
+
+</En>
+<Hi>
+
+Yeh sirf **offline** chalta hai: pehle saari queries padh lo, index ki tarah use hone wali har value collect karo, compress karo, phir answer do. Queries ke dauraan kisi bhi value ka `c(x)` chahiye ho, toh sorted distinct array pe `Arrays.binarySearch` O(log n) mein de deta hai. `HashMap<Integer, Integer>` average O(1) hai, par practically slow padta hai.
+
+</Hi>
+
+</Callout>
+
+### Range updates with a difference array
+
+<En>
+
+Now flip the problem: **update a whole range** (add `x` to every value in `[a, b]`) and **read single values**. Build a **difference array** `d`, where `d[k] = arr[k] − arr[k − 1]`. The original array is the *prefix-sum array* of `d`.
+
+For `arr = [3, 3, 1, 1, 1, 5, 2, 2]`, `d = [3, 0, −2, 0, 0, 4, −3, 0]`. For instance, `arr[6] = 2 = 3 − 2 + 4 − 3`.
+
+To add `x` to `[a, b]`, change just two cells: `d[a] += x` and `d[b + 1] −= x`. The first raises every prefix sum from `a` on, and the second cancels the rise after `b`. Adding 5 to positions 1–4 turns `d` into `[3, 5, −2, 0, 0, −1, −3, 0]`.
+
+So range updates become **point updates** on `d`, and reading a value is a **prefix sum** of `d`. Put `d` in a Fenwick tree and both operations are O(log n).
+
+</En>
+<Hi>
+
+Ab problem ulta karo: **poori range update** karo (`[a, b]` ki har value mein `x` jodo) aur **single values padho**. Ek **difference array** `d` banao, jahan `d[k] = arr[k] − arr[k − 1]`. Original array, `d` ka *prefix-sum array* hai.
+
+`arr = [3, 3, 1, 1, 1, 5, 2, 2]` ke liye `d = [3, 0, −2, 0, 0, 4, −3, 0]`. Jaise `arr[6] = 2 = 3 − 2 + 4 − 3`.
+
+`[a, b]` mein `x` jodne ke liye sirf do cells badlo: `d[a] += x` aur `d[b + 1] −= x`. Pehla `a` se aage ke har prefix sum ko badha deta hai, doosra `b` ke baad us badhat ko cancel kar deta hai. Positions 1–4 mein 5 jodo, toh `d` ban jaata hai `[3, 5, −2, 0, 0, −1, −3, 0]`.
+
+Matlab range update = `d` pe **point update**, aur value padhna = `d` ka **prefix sum**. `d` ko Fenwick tree mein daal do — dono operations O(log n).
+
+</Hi>
+
+<JavaCode file="ch09/RangeUpdates.java" region="diff" />
+
+<RangeUpdateViz client:visible />
+
+<JavaCode file="ch09/RangeUpdates.java" region="bit" title="Range add + point query with a Fenwick tree" />
+
+<Callout type="book">
+
+<En>
+
+Supporting **both** range updates and range queries at the same time is harder. Chapter 28 does it with *lazy propagation* in segment trees.
+
+</En>
+<Hi>
+
+Range updates **aur** range queries dono ek saath chahiye? Woh thoda mushkil hai — Chapter 28 mein segment trees ki *lazy propagation* se karenge.
+
+</Hi>
+
+</Callout>
+
+### Choosing the right structure
+
+<En>
+
+| You need | Use | Build | Query | Update |
+|---|---|---|---|---|
+| Static range sums | Prefix sums | O(n) | O(1) | rebuild O(n) |
+| Static rectangle sums | 2D prefix sums | O(R·C) | O(1) | rebuild |
+| Static min / max / gcd | Sparse table | O(n log n) | O(1) | rebuild |
+| Point update + range sum | Fenwick tree | O(n) | O(log n) | O(log n) |
+| Point update + range min/max/any op | Segment tree | O(n) | O(log n) | O(log n) |
+| Range add + point query | Fenwick tree on `d` | O(n) | O(log n) | O(log n) |
+| Range add + range sum | Lazy segment tree (ch. 28) | O(n) | O(log n) | O(log n) |
+
+</En>
+<Hi>
+
+| Tumhe chahiye | Use karo | Build | Query | Update |
+|---|---|---|---|---|
+| Static range sums | Prefix sums | O(n) | O(1) | dobara O(n) |
+| Static rectangle sums | 2D prefix sums | O(R·C) | O(1) | dobara |
+| Static min / max / gcd | Sparse table | O(n log n) | O(1) | dobara |
+| Point update + range sum | Fenwick tree | O(n) | O(log n) | O(log n) |
+| Point update + range min/max/koi bhi op | Segment tree | O(n) | O(log n) | O(log n) |
+| Range add + point query | `d` pe Fenwick tree | O(n) | O(log n) | O(log n) |
+| Range add + range sum | Lazy segment tree (ch. 28) | O(n) | O(log n) | O(log n) |
+
+</Hi>
+
+</Section>

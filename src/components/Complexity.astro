@@ -1,0 +1,17 @@
+---
+interface Props {
+  caption?: string;
+  rows: [string, string, string?][]; // operation, cost, note
+}
+const { caption, rows } = Astro.props;
+---
+<div class="cx">
+  <table>
+    {caption && <caption>{caption}</caption>}
+    <tbody>
+      {rows.map(([op, cost, note]) => (
+        <tr><td>{op}</td><td>{cost}</td><td class="muted">{note ?? ''}</td></tr>
+      ))}
+    </tbody>
+  </table>
+</div>

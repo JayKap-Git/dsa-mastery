@@ -1,0 +1,33 @@
+---
+import { getCollection, render } from 'astro:content';
+import ChapterLayout from '../../layouts/ChapterLayout.astro';
+import En from '../../components/En.astro';
+import Hi from '../../components/Hi.astro';
+import Tx from '../../components/Tx.astro';
+import Section from '../../components/Section.astro';
+import Callout from '../../components/Callout.astro';
+import JavaCode from '../../components/JavaCode.astro';
+import Complexity from '../../components/Complexity.astro';
+import { chapterByNum } from '../../data/catalog';
+import type { ChapterExtras } from '../../data/types';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('chapters');
+  return entries.map((entry) => {
+    const meta = chapterByNum(entry.data.num);
+    if (!meta) throw new Error(`No catalog entry for chapter ${entry.data.num}`);
+    return { params: { slug: meta.slug }, props: { entry } };
+  });
+}
+
+const { entry } = Astro.props;
+const meta = chapterByNum(entry.data.num)!;
+const { Content } = await render(entry);
+
+const extrasModules = import.meta.glob<{ default: ChapterExtras }>('../../data/chapters/ch*.ts', { eager: true });
+const extras = extrasModules[`../../data/chapters/ch${String(meta.num).padStart(2, '0')}.ts`]?.default;
+const ready = new Set((await getCollection('chapters')).map((e) => chapterByNum(e.data.num)!.slug));
+---
+<ChapterLayout meta={meta} minutes={entry.data.minutes} learn={entry.data.learn} prerequisites={entry.data.prerequisites} extras={extras} ready={ready}>
+  <Content components={{ En, Hi, Tx, Section, Callout, JavaCode, Complexity }} />
+</ChapterLayout>

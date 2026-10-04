@@ -1,0 +1,11 @@
+---
+// Short inline bilingual text. `ui` marks interface chrome (labels, headings, buttons):
+// in "Both" mode those show English only, so only learning content is doubled.
+import type { Bi } from '../viz/engine/types';
+import { richHtml } from '../lib/rich';
+interface Props { v: Bi; ui?: boolean }
+const { v, ui } = Astro.props;
+---
+{v.en === v.hi
+  ? <span set:html={richHtml(v.en)} />
+  : <><span class="tx-en" set:html={richHtml(v.en)} /><span class:list={['tx-hi', { ui }]} lang="hi-Latn" set:html={richHtml(v.hi)} /></>}

@@ -1,0 +1,15 @@
+---
+import type { CheatItem } from '../data/types';
+import { richHtml } from '../lib/rich';
+interface Props { items: CheatItem[] }
+const { items } = Astro.props;
+---
+<div class="cheats">
+  {items.map((c) => (
+    <div class="cheat">
+      <h3>{c.title}</h3>
+      <p class="lang-en" set:html={richHtml(c.body.en)} />
+      <p class="lang-hi" lang="hi-Latn" set:html={richHtml(c.body.hi)} />
+    </div>
+  ))}
+</div>

@@ -1,0 +1,54 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import En from '../components/En.astro';
+import Hi from '../components/Hi.astro';
+---
+<BaseLayout title="About" active="about">
+  <main id="main" class="page" data-pagefind-body>
+    <article class="narrow prose">
+      <h1 style="font-size:2.4rem">About DSA Mastery</h1>
+
+      <h2>How to study here</h2>
+      <En>
+        <ol>
+          <li><strong>Read a section</strong> in English, Hinglish, or both. Use the EN / HI / Both switch at the top. Your choice is remembered.</li>
+          <li><strong>Run the visualiser</strong> on the book’s example first, then on your own input. Step backwards whenever something surprises you. The highlighted Java line shows where you are in the code.</li>
+          <li><strong>Mark the section done</strong> only when you could explain it to a friend.</li>
+          <li><strong>Take the chapter quiz</strong>, then solve the CSES problems in Java, roughly in the listed order.</li>
+          <li><strong>Revise</strong> with the cheat sheets and flashcards on the Revision page.</li>
+        </ol>
+        <p>Visualiser shortcuts: click a visualiser, then <kbd>Space</kbd> play/pause, <kbd>←</kbd> <kbd>→</kbd> step, <kbd>Home</kbd> / <kbd>End</kbd> jump. Press <kbd>/</kbd> anywhere to search.</p>
+      </En>
+      <Hi>
+        <ol>
+          <li><strong>Section padho</strong> — English, Hinglish ya dono mein. Upar EN / HI / Both switch hai, aur tumhari choice yaad rehti hai.</li>
+          <li><strong>Visualiser chalao</strong> — pehle book ke example pe, phir apne input pe. Kuch ajeeb lage toh peeche step karo. Highlighted Java line batati hai ki code mein abhi kahan ho.</li>
+          <li><strong>Section done mark karo</strong> — tabhi jab kisi dost ko samjha sako.</li>
+          <li><strong>Chapter quiz do</strong>, phir CSES problems Java mein solve karo, lagbhag diye gaye order mein.</li>
+          <li><strong>Revise karo</strong> — Revision page pe cheat sheets aur flashcards se.</li>
+        </ol>
+        <p>Visualiser shortcuts: visualiser pe click karo, phir <kbd>Space</kbd> play/pause, <kbd>←</kbd> <kbd>→</kbd> step, <kbd>Home</kbd> / <kbd>End</kbd> jump. Kahin bhi <kbd>/</kbd> dabao toh search khulega.</p>
+      </Hi>
+
+      <h2>Credits and license</h2>
+      <p>
+        All chapters follow <a href="https://cses.fi/book/book.pdf">Competitive Programmer’s Handbook</a> by
+        <strong>Antti Laaksonen</strong> (the 2018 draft), which is licensed under
+        <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>. The explanations here are rewritten
+        and expanded in English and Hinglish, and the C++ code is translated to Java. This site’s content is shared under the same
+        license (attribution, non-commercial, share-alike). The site’s source code is MIT-licensed.
+      </p>
+      <p>
+        Practice problems link to the <a href="https://cses.fi/problemset/">CSES Problem Set</a>, the book’s companion collection.
+        This is a personal, non-commercial study project and is not affiliated with the author or CSES.
+      </p>
+
+      <h2>Java conventions</h2>
+      <p>
+        Every Java snippet comes from a real file that compiles with <code>javac --release 11</code> (safe on online judges) and runs
+        self-tests against brute force before the site is built. Sums use <code>long</code>, Fenwick trees are 1-indexed like the book,
+        and other structures are 0-indexed unless the text says otherwise.
+      </p>
+    </article>
+  </main>
+</BaseLayout>

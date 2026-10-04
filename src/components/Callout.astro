@@ -1,0 +1,21 @@
+---
+import Icon from './Icon.astro';
+type Kind = 'insight' | 'java' | 'pitfall' | 'complexity' | 'book';
+interface Props { type?: Kind; title?: string; titleHi?: string }
+const { type = 'insight', title, titleHi } = Astro.props;
+const defaults: Record<Kind, { icon: 'bulb' | 'coffee' | 'alert' | 'clock' | 'book'; en: string; hi: string }> = {
+  insight: { icon: 'bulb', en: 'Key idea', hi: 'Asli baat' },
+  java: { icon: 'coffee', en: 'Java note', hi: 'Java note' },
+  pitfall: { icon: 'alert', en: 'Watch out', hi: 'Dhyaan do' },
+  complexity: { icon: 'clock', en: 'Complexity', hi: 'Complexity' },
+  book: { icon: 'book', en: 'From the book', hi: 'Book se' },
+};
+const d = defaults[type];
+---
+<aside class={`callout ${type}`}>
+  <Icon name={d.icon} />
+  <div class="callout-body">
+    <p class="callout-title"><span class="tx-en">{title ?? d.en}</span><span class="tx-hi ui" lang="hi-Latn">{titleHi ?? title ?? d.hi}</span></p>
+    <slot />
+  </div>
+</aside>

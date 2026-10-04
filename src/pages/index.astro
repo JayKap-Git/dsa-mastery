@@ -1,0 +1,79 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Tx from '../components/Tx.astro';
+import { CHAPTERS, PARTS, chapterByNum } from '../data/catalog';
+
+const ready = new Set((await getCollection('chapters')).map((e) => chapterByNum(e.data.num)!.slug));
+const first = CHAPTERS.find((c) => ready.has(c.slug));
+const totalSections = CHAPTERS.filter((c) => ready.has(c.slug)).reduce((s, c) => s + c.sections.length, 0);
+const parts = [1, 2, 3] as const;
+---
+<BaseLayout title="DSA Mastery" active="chapters">
+  <main id="main" class="page">
+    <section class="hero">
+      <div>
+        <h1>From intermediate to <em>expert</em>, one chapter at a time.</h1>
+        <p>
+          <Tx v={{
+            en: 'An interactive companion to Competitive Programmer’s Handbook: every idea explained in English and Hinglish, every algorithm in tested Java, and step-through visualisers you can feed your own input.',
+            hi: 'Competitive Programmer’s Handbook ka interactive saathi: har idea English aur Hinglish mein, har algorithm tested Java mein, aur aise visualisers jinhe tum apna input dekar step-by-step chala sakte ho.',
+          }} />
+        </p>
+        <div class="hero-actions">
+          {first && (
+            <a class="btn primary" href={`/chapters/${first.slug}/`} data-continue>
+              <span data-continue-label><Tx ui v={{ en: `Start with ${first.num}. ${first.title}`, hi: `${first.num}. ${first.title} se shuru karo` }} /></span> →
+            </a>
+          )}
+          <a class="btn" href="/about/"><Tx ui v={{ en: 'How to study here', hi: 'Yahan kaise padhein' }} /></a>
+        </div>
+      </div>
+      <div class="hero-card">
+        <div class="stat-row">
+          <div class="stat"><b>{ready.size}<span class="muted" style="font-size:0.9rem">/30</span></b><small><Tx ui v={{ en: 'chapters live', hi: 'chapters ready' }} /></small></div>
+          <div class="stat"><b data-stat="sections">0</b><small><Tx ui v={{ en: `of ${totalSections} sections done`, hi: `${totalSections} mein se sections done` }} /></small></div>
+          <div class="stat"><b data-stat="quizzes">0</b><small><Tx ui v={{ en: 'quizzes taken', hi: 'quizzes diye' }} /></small></div>
+        </div>
+        <p class="muted" style="margin:0;font-size:0.88rem">
+          <Tx v={{ en: 'Progress is saved in this browser. Move it to another device with export/import:', hi: 'Progress isi browser mein save hota hai. Doosre device pe le jaane ke liye export/import karo:' }} />
+        </p>
+        <div class="hero-actions">
+          <button class="btn" type="button" data-export-progress><Tx ui v={{ en: 'Export progress', hi: 'Progress export' }} /></button>
+          <label class="btn" style="cursor:pointer"><Tx ui v={{ en: 'Import', hi: 'Import' }} /><input type="file" accept="application/json" data-import-progress hidden /></label>
+        </div>
+      </div>
+    </section>
+
+    {parts.map((part) => (
+      <section class="part" aria-labelledby={`part-${part}`}>
+        <div class="part-head">
+          <span class="part-no">PART {part === 1 ? 'I' : part === 2 ? 'II' : 'III'}</span>
+          <h2 id={`part-${part}`}>{PARTS[part].title}</h2>
+          <p><Tx v={PARTS[part].blurb} /></p>
+        </div>
+        <div class="cards">
+          {CHAPTERS.filter((c) => c.part === part).map((c) => {
+            const live = ready.has(c.slug);
+            const Tag = live ? 'a' : 'div';
+            return (
+              <Tag class={`card${live ? '' : ' soon'}`} href={live ? `/chapters/${c.slug}/` : undefined} data-chapter-title={c.slug} data-title={`${c.num}. ${c.title}`}>
+                <span class="num">{String(c.num).padStart(2, '0')}</span>
+                {c.condensed && <span class="chip badge"><Tx ui v={{ en: 'quick revision', hi: 'quick revision' }} /></span>}
+                {!live && <span class="chip badge"><Tx ui v={{ en: 'coming soon', hi: 'jald aa raha' }} /></span>}
+                <h3>{c.title}</h3>
+                <p><Tx v={c.blurb} /></p>
+                {live && (
+                  <div class="card-foot" data-progress-chapter={c.slug} data-total={c.sections.length}>
+                    <div class="meter-label"><span data-progress-text>0/{c.sections.length}</span><span data-quiz-text></span></div>
+                    <div class="meter"><span></span></div>
+                  </div>
+                )}
+              </Tag>
+            );
+          })}
+        </div>
+      </section>
+    ))}
+  </main>
+</BaseLayout>

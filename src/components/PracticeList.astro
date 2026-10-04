@@ -1,0 +1,24 @@
+---
+import type { PracticeProblem } from '../data/types';
+import cses from '../data/cses.json';
+import Tx from './Tx.astro';
+
+interface Props { problems: PracticeProblem[] }
+const { problems } = Astro.props;
+
+// Fail the build if an id/name pair is not in the real CSES problem set.
+const known = new Map<number, string>(Object.values(cses as unknown as Record<string, [number, string][]>).flat());
+for (const p of problems) {
+  if (known.get(p.id) !== p.name) throw new Error(`CSES #${p.id} is "${known.get(p.id)}", not "${p.name}"`);
+}
+---
+<ol class="practice">
+  {problems.map((p) => (
+    <li>
+      <span class={`level ${p.level}`}>{p.level}</span>
+      <a href={`https://cses.fi/problemset/task/${p.id}`} rel="noopener" target="_blank">{p.name}</a>
+      <span class="sec">§{p.section}</span>
+      <span class="note"><Tx v={p.note} /></span>
+    </li>
+  ))}
+</ol>

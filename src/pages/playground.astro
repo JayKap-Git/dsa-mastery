@@ -1,0 +1,36 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Tx from '../components/Tx.astro';
+import { chapterByNum, sectionAnchor } from '../data/catalog';
+import { VISUALIZERS } from '../data/visualizers';
+
+const byChapter = Map.groupBy(VISUALIZERS, (v) => v.chapter);
+---
+<BaseLayout title="Playground" active="playground">
+  <main id="main" class="page">
+    <div class="narrow">
+      <h1 style="font-size:2.4rem;margin:0 0 0.5rem">Playground</h1>
+      <p class="muted" style="margin:0 0 2rem;font-size:1.05rem">
+        <Tx v={{ en: 'Every visualiser on the site. Each opens in its chapter, next to the explanation and the Java code it animates.', hi: 'Site ke saare visualisers. Har ek apne chapter mein khulta hai — explanation aur Java code ke bilkul saath.' }} />
+      </p>
+      {[...byChapter].map(([num, list]) => {
+        const c = chapterByNum(num)!;
+        return (
+          <section style="margin-bottom:2rem">
+            <h2 style="font-size:1.25rem;margin:0 0 0.8rem">{c.num}. {c.title}</h2>
+            <div class="cards">
+              {list.map((v) => (
+                <a class="card" style="min-height:0" href={`/chapters/${c.slug}/#${sectionAnchor(v.section)}`}>
+                  <span class="num">§{v.section}</span>
+                  <h3><Tx v={v.title} /></h3>
+                  <p><Tx v={v.shows} /></p>
+                </a>
+              ))}
+            </div>
+          </section>
+        );
+      })}
+      <p class="muted"><Tx ui v={{ en: 'More visualisers arrive with each new chapter.', hi: 'Har naye chapter ke saath aur visualisers aayenge.' }} /></p>
+    </div>
+  </main>
+</BaseLayout>

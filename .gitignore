@@ -1,0 +1,15 @@
+# deps & build
+node_modules/
+dist/
+.astro/
+java/out/
+
+# authoring-only inputs — never publish the book itself
+book.pdf
+*.pdf
+.book-text/
+
+# misc
+.DS_Store
+.env*
+*.log

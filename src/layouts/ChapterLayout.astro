@@ -1,0 +1,104 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Tx from '../components/Tx.astro';
+import PracticeList from '../components/PracticeList.astro';
+import CheatSheet from '../components/CheatSheet.astro';
+import Quiz from '../components/Quiz.tsx';
+import Flashcards from '../components/Flashcards.tsx';
+import { CHAPTERS, PARTS, sectionAnchor, type ChapterMeta } from '../data/catalog';
+import type { ChapterExtras } from '../data/types';
+import type { Bi } from '../viz/engine/types';
+
+interface Props {
+  meta: ChapterMeta;
+  minutes: number;
+  learn: Bi[];
+  prerequisites: number[];
+  extras?: ChapterExtras;
+  ready: Set<string>;
+}
+const { meta, minutes, learn, prerequisites, extras, ready } = Astro.props;
+const idx = CHAPTERS.findIndex((c) => c.num === meta.num);
+const prev = CHAPTERS[idx - 1];
+const next = CHAPTERS[idx + 1];
+const prereq = prerequisites.map((n) => CHAPTERS.find((c) => c.num === n)!).filter(Boolean);
+---
+<BaseLayout title={`${meta.num}. ${meta.title}`} description={meta.blurb.en} active="chapters">
+  <div class="page">
+    <div class="chapter-grid">
+      <aside class="toc" aria-label="On this page">
+        <div class="toc-chapter">Chapter {meta.num} · Part {meta.part}</div>
+        <p class="toc-title">{meta.title}</p>
+        <div class="toc-progress" data-progress-chapter={meta.slug} data-total={meta.sections.length}>
+          <div class="meter-label"><span><Tx ui v={{ en: 'Sections done', hi: 'Sections done' }} /></span><span data-progress-text>0/{meta.sections.length}</span></div>
+          <div class="meter"><span></span></div>
+        </div>
+        <ol>
+          {meta.sections.map((s) => (
+            <li><a href={`#${sectionAnchor(s.id)}`} data-toc-section={s.id}><span class="sec-no">{s.id}</span><span>{s.title}</span><span class="tick" aria-hidden="true">✓</span></a></li>
+          ))}
+          {extras && <>
+            <li class="toc-extra"><a href="#cheatsheet"><span class="sec-no">★</span><span><Tx ui v={{ en: 'Cheat sheet', hi: 'Cheat sheet' }} /></span></a></li>
+            <li class="toc-extra"><a href="#quiz"><span class="sec-no">?</span><span><Tx ui v={{ en: 'Quiz', hi: 'Quiz' }} /></span></a></li>
+            <li class="toc-extra"><a href="#practice"><span class="sec-no">▸</span><span><Tx ui v={{ en: 'Practice problems', hi: 'Practice problems' }} /></span></a></li>
+          </>}
+        </ol>
+      </aside>
+
+      <main id="main" class="chapter-main" data-chapter={meta.slug} data-pagefind-body>
+        <header class="ch-hero">
+          <div class="ch-kicker">
+            <span class="chip accent">Chapter {meta.num}</span>
+            <span>{PARTS[meta.part].title}</span>
+            <span>· <Tx ui v={{ en: `~${minutes} min`, hi: `~${minutes} min` }} /></span>
+            <span>· <Tx ui v={{ en: `Book pages ${meta.pages[0]}–${meta.pages[1]}`, hi: `Book ke pages ${meta.pages[0]}–${meta.pages[1]}` }} /></span>
+          </div>
+          <h1>{meta.title}</h1>
+          <p class="lede"><Tx v={meta.blurb} /></p>
+          <div class="learn">
+            <h2><Tx ui v={{ en: 'What you will learn', hi: 'Is chapter mein kya seekhoge' }} /></h2>
+            <ul>{learn.map((l) => <li><Tx v={l} /></li>)}</ul>
+            {prereq.length > 0 && (
+              <p class="muted" style="margin:0.6rem 0 0;font-size:0.9rem">
+                <Tx ui v={{ en: 'Helps to know: ', hi: 'Pehle se pata ho toh achha: ' }} />
+                {prereq.map((c, i) => <>{i > 0 && ', '}{ready.has(c.slug) ? <a href={`/chapters/${c.slug}/`}>{c.num}. {c.title}</a> : <span>{c.num}. {c.title}</span>}</>)}
+              </p>
+            )}
+          </div>
+        </header>
+
+        <article class="prose">
+          <slot />
+        </article>
+
+        {extras && <>
+          <section class="end-block" id="cheatsheet">
+            <h2><Tx ui v={{ en: 'Cheat sheet', hi: 'Cheat sheet' }} /></h2>
+            <p class="sub"><Tx v={{ en: 'The whole chapter on one screen — revise from here before a contest.', hi: 'Poora chapter ek screen pe — contest se pehle yahin se revise karo.' }} /></p>
+            <CheatSheet items={extras.cheatsheet} />
+            <Flashcards client:visible cards={extras.flashcards} />
+          </section>
+          <section class="end-block" id="quiz" data-pagefind-ignore>
+            <h2><Tx ui v={{ en: 'Check yourself', hi: 'Khud ko check karo' }} /></h2>
+            <p class="sub"><Tx v={{ en: 'Pick an answer to see the explanation. Your best score is saved.', hi: 'Answer chuno, explanation turant dikhega. Tumhara best score save hota hai.' }} /></p>
+            <Quiz client:visible chapter={meta.slug} questions={extras.quiz} />
+          </section>
+          <section class="end-block" id="practice">
+            <h2><Tx ui v={{ en: 'Practice on CSES', hi: 'CSES pe practice karo' }} /></h2>
+            <p class="sub"><Tx v={{ en: 'The CSES Problem Set is the book’s companion. Solve these in Java, roughly in this order.', hi: 'CSES Problem Set is book ka saathi hai. Inhe Java mein solve karo, lagbhag isi order mein.' }} /></p>
+            <PracticeList problems={extras.practice} />
+          </section>
+        </>}
+
+        <nav class="pager" aria-label="Chapters">
+          {prev ? (ready.has(prev.slug)
+            ? <a href={`/chapters/${prev.slug}/`}><small>← Previous</small><b>{prev.num}. {prev.title}</b></a>
+            : <span><small>← Previous (coming soon)</small><b>{prev.num}. {prev.title}</b></span>) : <span />}
+          {next ? (ready.has(next.slug)
+            ? <a class="next" href={`/chapters/${next.slug}/`}><small>Next →</small><b>{next.num}. {next.title}</b></a>
+            : <span class="next"><small>Next (coming soon) →</small><b>{next.num}. {next.title}</b></span>) : <span />}
+        </nav>
+      </main>
+    </div>
+  </div>
+</BaseLayout>

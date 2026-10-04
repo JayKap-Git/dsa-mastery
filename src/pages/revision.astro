@@ -1,0 +1,35 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Tx from '../components/Tx.astro';
+import CheatSheet from '../components/CheatSheet.astro';
+import Flashcards from '../components/Flashcards.tsx';
+import { chapterByNum } from '../data/catalog';
+import type { ChapterExtras } from '../data/types';
+
+const mods = import.meta.glob<{ default: ChapterExtras }>('../data/chapters/ch*.ts', { eager: true });
+const chapters = Object.entries(mods)
+  .map(([path, m]) => ({ num: Number(path.match(/ch(\d+)\.ts$/)![1]), extras: m.default }))
+  .sort((a, b) => a.num - b.num);
+const allCards = chapters.flatMap(({ num, extras }) => extras.flashcards.map((f) => ({ ...f, tag: `Ch ${num}` })));
+---
+<BaseLayout title="Revision" active="revision">
+  <main id="main" class="page">
+    <div class="narrow">
+      <h1 style="font-size:2.4rem;margin:0 0 0.5rem"><Tx ui v={{ en: 'Revision', hi: 'Revision' }} /></h1>
+      <p class="muted" style="margin:0 0 2rem;font-size:1.05rem">
+        <Tx v={{ en: 'Flashcards from every finished chapter, then each chapter’s cheat sheet. Ideal the night before a contest.', hi: 'Har finished chapter ke flashcards, phir har chapter ki cheat sheet. Contest se pehle wali raat ke liye perfect.' }} />
+      </p>
+      <h2 style="font-size:1.3rem"><Tx ui v={{ en: `All flashcards (${allCards.length})`, hi: `Saare flashcards (${allCards.length})` }} /></h2>
+      <Flashcards client:visible cards={allCards} />
+      {chapters.map(({ num, extras }) => {
+        const c = chapterByNum(num)!;
+        return (
+          <section style="margin-top:2.5rem">
+            <h2 style="font-size:1.3rem"><a href={`/chapters/${c.slug}/`}>{c.num}. {c.title}</a></h2>
+            <CheatSheet items={extras.cheatsheet} />
+          </section>
+        );
+      })}
+    </div>
+  </main>
+</BaseLayout>

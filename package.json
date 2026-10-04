@@ -1,0 +1,44 @@
+{
+  "name": "dsa-mastery",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Interactive study platform for Competitive Programmer's Handbook — Java code, English + Hinglish, step-through visualisers.",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build && pagefind --site dist",
+    "preview": "astro preview",
+    "check": "astro check",
+    "test": "vitest run",
+    "java:test": "bash scripts/java-test.sh",
+    "lint:content": "node scripts/lint-content.mjs",
+    "extract": "node scripts/extract-book.mjs",
+    "verify": "npm run check && npm run test && npm run java:test && npm run lint:content && npm run build"
+  },
+  "dependencies": {
+    "@astrojs/markdown-remark": "^7.3.1",
+    "@astrojs/mdx": "^8.0.2",
+    "@astrojs/react": "^7.0.0",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@fontsource-variable/space-grotesk": "^5.3.0",
+    "astro": "^7.3.5",
+    "d3-hierarchy": "^3.1.2",
+    "katex": "^0.19.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0",
+    "shiki": "^4.5.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/d3-hierarchy": "^3.1.7",
+    "@types/node": "^26.6.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "pagefind": "^1.5.2",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.11"
+  }
+}

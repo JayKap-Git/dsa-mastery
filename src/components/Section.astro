@@ -1,0 +1,15 @@
+---
+import { sectionAnchor } from '../data/catalog';
+interface Props { id: string; title: string }
+const { id, title } = Astro.props;
+---
+<section class="book-section" id={sectionAnchor(id)} data-section={id}>
+  <h2><span class="sec-no">{id}</span>{title}</h2>
+  <slot />
+  <div class="section-done">
+    <label>
+      <input type="checkbox" data-section-check={id} />
+      <span class="tx-en">I understand {id} — mark as done</span><span class="tx-hi ui" lang="hi-Latn">{id} samajh aa gaya — done mark karo</span>
+    </label>
+  </div>
+</section>

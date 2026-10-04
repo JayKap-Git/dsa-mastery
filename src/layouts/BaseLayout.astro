@@ -1,0 +1,116 @@
+---
+import '@fontsource-variable/inter';
+import '@fontsource-variable/space-grotesk';
+import '@fontsource-variable/jetbrains-mono';
+import 'katex/dist/katex.min.css';
+import '../styles/global.css';
+import Icon from '../components/Icon.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  active?: 'chapters' | 'playground' | 'revision' | 'about';
+}
+const { title, description = 'Interactive study platform for Competitive Programmer’s Handbook — Java code, English + Hinglish explanations, step-through visualisers.', active } = Astro.props;
+const fullTitle = title === 'DSA Mastery' ? title : `${title} · DSA Mastery`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const nav = [
+  { key: 'chapters', href: '/', label: 'Chapters' },
+  { key: 'playground', href: '/playground/', label: 'Playground' },
+  { key: 'revision', href: '/revision/', label: 'Revision' },
+  { key: 'about', href: '/about/', label: 'About' },
+] as const;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta name="theme-color" content="#4f46e5" />
+    <script is:inline>
+      // Apply saved language + theme before first paint (no flash of the wrong language).
+      (function () {
+        var d = document.documentElement;
+        var lang = 'en';
+        var q = new URLSearchParams(location.search);
+        try {
+          // ?lang=hi / ?theme=dark in a shared link wins, and is remembered.
+          if (/^(en|hi|both)$/.test(q.get('lang') || '')) localStorage.setItem('dsa-mastery:lang', q.get('lang'));
+          if (/^(light|dark)$/.test(q.get('theme') || '')) localStorage.setItem('dsa-mastery:theme', q.get('theme'));
+          var l = localStorage.getItem('dsa-mastery:lang');
+          if (l === 'en' || l === 'hi' || l === 'both') lang = l;
+          var t = localStorage.getItem('dsa-mastery:theme');
+          if (t === 'light' || t === 'dark') d.dataset.theme = t;
+        } catch (e) {
+          if (/^(en|hi|both)$/.test(q.get('lang') || '')) lang = q.get('lang');
+          if (/^(light|dark)$/.test(q.get('theme') || '')) d.dataset.theme = q.get('theme');
+        }
+        d.dataset.lang = lang;
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="visually-hidden" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="/" aria-label="DSA Mastery home">
+          <span class="brand-mark">DSA</span><span class="brand-text">Mastery</span>
+        </a>
+        <nav class="nav" aria-label="Main">
+          {nav.map((n) => <a href={n.href} aria-current={active === n.key ? 'page' : undefined}>{n.label}</a>)}
+        </nav>
+        <div class="header-tools">
+          <button class="search-btn" type="button" data-open-search aria-label="Search">
+            <Icon name="search" /><span>Search</span><kbd>/</kbd>
+          </button>
+          <div class="lang-switch" role="group" aria-label="Language">
+            <button type="button" data-set-lang="en" aria-pressed="false" title="English">EN</button>
+            <button type="button" data-set-lang="hi" aria-pressed="false" title="Hinglish">HI</button>
+            <button type="button" data-set-lang="both" aria-pressed="false" title="English + Hinglish">Both</button>
+          </div>
+          <button class="icon-btn" type="button" data-toggle-theme aria-label="Toggle dark mode">
+            <span class="theme-icon moon"><Icon name="moon" /></span><span class="theme-icon sun"><Icon name="sun" /></span>
+          </button>
+          <button class="icon-btn menu-btn" type="button" data-toggle-menu aria-expanded="false" aria-controls="mobile-nav" aria-label="Menu">
+            <Icon name="menu" />
+          </button>
+        </div>
+      </div>
+    </header>
+    <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile">
+      {nav.map((n) => <a href={n.href} aria-current={active === n.key ? 'page' : undefined}>{n.label}</a>)}
+    </nav>
+
+    <slot />
+
+    <footer class="site-footer">
+      <div class="inner">
+        <span>
+          Based on <a href="https://cses.fi/book/book.pdf" rel="noopener">Competitive Programmer’s Handbook</a> by Antti Laaksonen.
+          Content under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license noopener">CC BY-NC-SA 4.0</a>.
+        </span>
+        <span><a href="/about/">About & credits</a> · Made for study by Jayant Kapoor</span>
+      </div>
+    </footer>
+
+    <dialog class="search" id="search-dialog" aria-label="Search">
+      <div class="search-inner">
+        <button class="icon-btn search-close" type="button" data-close-search aria-label="Close search"><Icon name="x" /></button>
+        <div id="search-root"></div>
+        <p class="search-note" id="search-note" hidden>Search is available on the built site (run <code>npm run build</code> then <code>npm run preview</code>).</p>
+      </div>
+    </dialog>
+
+    <script>
+      import '../scripts/site';
+    </script>
+  </body>
+</html>

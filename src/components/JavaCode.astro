@@ -1,0 +1,23 @@
+---
+// Renders a region of a real, tested Java file from java/src.
+import { resolve } from 'node:path';
+import { loadJava } from '../lib/java-source.mjs';
+interface Props {
+  file: string; // e.g. "ch09/SegmentTree.java"
+  region: string;
+  title?: string;
+}
+const { file, region, title } = Astro.props;
+const snippet = await loadJava(resolve(process.cwd(), 'java/src', file), region);
+---
+<div class="codeblock">
+  <div class="codeblock-head">
+    <span class="lang">JAVA</span>
+    <span class="path">{title ?? `${file}`}</span>
+    <button class="copy-btn" type="button" data-copy>Copy</button>
+  </div>
+  <pre class="code"><code>{snippet.lines.map((html, i) => (
+    <span class="line"><span class="ln" aria-hidden="true">{i + 1}</span><span set:html={html || ' '} /></span>
+  ))}</code></pre>
+  <textarea class="raw" hidden readonly aria-hidden="true">{snippet.code}</textarea>
+</div>

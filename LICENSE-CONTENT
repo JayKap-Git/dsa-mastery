@@ -1,0 +1,20 @@
+Educational content license
+===========================
+
+The lesson text (src/content/**), quizzes, cheat sheets and flashcards (src/data/chapters/**),
+visualiser narration (src/viz/algos/**) and the Java example code (java/**) are adapted from
+
+    Competitive Programmer's Handbook, Antti Laaksonen (draft, July 3, 2018)
+    https://cses.fi/book/book.pdf
+
+which is licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0
+International (CC BY-NC-SA 4.0).
+
+This adapted content is likewise licensed under CC BY-NC-SA 4.0:
+https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+Changes from the original: explanations rewritten and expanded in English and Hinglish,
+C++ code translated to Java, interactive visualisers, quizzes and practice lists added.
+
+This project is a personal, non-commercial study resource and is not affiliated with
+the author or with CSES.
